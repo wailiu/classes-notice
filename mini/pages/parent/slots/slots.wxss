@@ -47,13 +47,19 @@
 }
 
 .chip {
-  display: inline-block;
+  flex: 1 0 auto;
+  box-sizing: border-box;
   border: 2rpx solid #e4e7ed;
   border-radius: 999rpx;
   padding: 10rpx 24rpx;
   margin-right: 12rpx;
+  text-align: center;
   font-size: 24rpx;
   color: #666;
+}
+
+.chip:last-child {
+  margin-right: 0;
 }
 
 .chip.active {

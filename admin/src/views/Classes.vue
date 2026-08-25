@@ -95,7 +95,7 @@
         value-format="YYYY-MM-DD"
         start-placeholder="开始日期"
         end-placeholder="结束日期"
-        style="width: 100%"
+        style="width: 100%; box-sizing: border-box"
       />
       <template #footer>
         <el-button @click="generateVisible = false">取消</el-button>
