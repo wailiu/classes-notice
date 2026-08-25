@@ -75,6 +75,8 @@ describe('MiniService.availableLessons 课种可约标记', () => {
       pkgRepo,
       bookingRepo,
       {} as any,
+      {} as any,
+      {} as any,
     );
   });
 
@@ -124,5 +126,171 @@ describe('MiniService.availableLessons 课种可约标记', () => {
     const list = await service.availableLessons(1, 7);
     expect(list).toHaveLength(5);
     expect(new Set(list.map((l) => l.courseName))).toEqual(new Set(['素描', '钢琴', '书法']));
+  });
+});
+
+/**
+ * 预约入口页(按课种聚合)排序规则单测:
+ * 已购且有剩余课时的课种置顶 → 已购但课时用完 → 未购买,排序在服务端完成。
+ */
+describe('MiniService.parentCourses 课种列表已购置顶', () => {
+  // 课种:10 素描(已购剩 5)、20 钢琴(未购)、30 书法(已购剩 0)、40 声乐(未购)
+  const courses = [
+    { id: 10, name: '素描', description: null, status: 'active' },
+    { id: 20, name: '钢琴', description: null, status: 'active' },
+    { id: 30, name: '书法', description: null, status: 'active' },
+    { id: 40, name: '声乐', description: null, status: 'active' },
+  ];
+  const classes = [
+    { id: 1, courseId: 10, name: '素描·周六上午班', weekday: 6, startTime: '10:00', endTime: '11:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } },
+    { id: 2, courseId: 10, name: '素描·周六下午班', weekday: 6, startTime: '14:00', endTime: '15:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } },
+    { id: 3, courseId: 10, name: '素描·周日上午班', weekday: 7, startTime: '10:00', endTime: '11:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } },
+    { id: 4, courseId: 20, name: '钢琴考级小组班', weekday: 7, startTime: '15:00', endTime: '16:00', room: '302', capacity: 4, status: 'active', teacher: { name: '陈韵' } },
+    { id: 5, courseId: 30, name: '书法硬笔班', weekday: 3, startTime: '18:30', endTime: '19:30', room: '201', capacity: 12, status: 'active', teacher: { name: '李墨' } },
+    { id: 6, courseId: 40, name: '声乐启蒙班', weekday: 6, startTime: '14:00', endTime: '15:00', room: '301', capacity: 6, status: 'active', teacher: { name: '陈韵' } },
+  ];
+  const studentPackages = [
+    { id: 1, studentId: 7, courseId: 10, remainingLessons: 5, status: 'active', validUntil: null },
+    { id: 2, studentId: 7, courseId: 30, remainingLessons: 0, status: 'finished', validUntil: null },
+  ];
+
+  let service: MiniService;
+
+  beforeEach(() => {
+    const linkRepo: any = { findOne: async () => ({ parentId: 1, studentId: 7 }) };
+    const courseRepo: any = { find: async () => courses };
+    const classRepo: any = { find: async () => classes };
+    const pkgRepo: any = { find: async () => studentPackages };
+    service = new MiniService(
+      {} as any,
+      linkRepo,
+      {} as any,
+      {} as any,
+      pkgRepo,
+      {} as any,
+      courseRepo,
+      classRepo,
+      {} as any,
+    );
+  });
+
+  it('已购且有剩余课时的课种排最前,未购买的排最后', async () => {
+    const list = await service.parentCourses(1, 7);
+    expect(list.map((c) => c.courseName)).toEqual(['素描', '书法', '钢琴', '声乐']);
+    expect(list[0].bookable).toBe(true);
+    expect(list[0].remaining).toBe(5);
+  });
+
+  it('已购但课时用完:排在可约课种之后、未购课种之前,不可约且原因明确', async () => {
+    const list = await service.parentCourses(1, 7);
+    const calligraphy = list.find((c) => c.courseName === '书法')!;
+    expect(calligraphy.purchased).toBe(true);
+    expect(calligraphy.bookable).toBe(false);
+    expect(calligraphy.reason).toContain('课时不足');
+    expect(list.indexOf(calligraphy)).toBeLessThan(list.findIndex((c) => c.courseName === '钢琴'));
+  });
+
+  it('未购课种不可约,原因提示联系前台报名', async () => {
+    const list = await service.parentCourses(1, 7);
+    const piano = list.find((c) => c.courseName === '钢琴')!;
+    expect(piano.purchased).toBe(false);
+    expect(piano.bookable).toBe(false);
+    expect(piano.reason).toContain('未购买');
+  });
+
+  it('时段摘要:按周几+开始时间排序,含上午/下午划分', async () => {
+    const list = await service.parentCourses(1, 7);
+    const sketch = list.find((c) => c.courseName === '素描')!;
+    expect(sketch.slots.map((s) => `${s.weekdayText}${s.period}`)).toEqual([
+      '周六上午',
+      '周六下午',
+      '周日上午',
+    ]);
+    expect(sketch.slots[0]).toEqual(
+      expect.objectContaining({ classId: 1, startTime: '10:00', endTime: '11:30', teacherName: '王雪' }),
+    );
+  });
+});
+
+/** 选时段页数据:课次按班级(时段)分组,canBook/reason 标记正确 */
+describe('MiniService.courseSlots 课种时段与课次', () => {
+  const D_SAT = dayjs().add(3, 'day').format('YYYY-MM-DD');
+  const D_SAT2 = dayjs().add(10, 'day').format('YYYY-MM-DD');
+
+  const makeLesson = (id: number, date: string, cls: any, bookedCount = 0) => ({
+    id,
+    date,
+    startTime: cls.startTime,
+    endTime: cls.endTime,
+    status: 'scheduled',
+    bookedCount,
+    classEntity: cls,
+  });
+
+  let service: MiniService;
+
+  beforeEach(() => {
+    const satAm = { id: 1, courseId: 10, name: '素描·周六上午班', weekday: 6, startTime: '10:00', endTime: '11:30', room: '101', capacity: 2, status: 'active', teacher: { name: '王雪' } };
+    const satPm = { id: 2, courseId: 10, name: '素描·周六下午班', weekday: 6, startTime: '14:00', endTime: '15:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } };
+    const lessons = [
+      makeLesson(11, D_SAT, satAm),
+      makeLesson(12, D_SAT2, satAm, 2), // 满员
+      makeLesson(21, D_SAT, satPm),
+    ];
+    const qb: any = {
+      leftJoinAndSelect: () => qb,
+      loadRelationCountAndMap: () => qb,
+      where: () => qb,
+      andWhere: () => qb,
+      orderBy: () => qb,
+      addOrderBy: () => qb,
+      getMany: async () => lessons,
+    };
+    const linkRepo: any = { findOne: async () => ({ parentId: 1, studentId: 7 }) };
+    const courseRepo: any = { findOne: async () => ({ id: 10, name: '素描', description: null }) };
+    const lessonRepo: any = { createQueryBuilder: () => qb };
+    const pkgRepo: any = {
+      find: async () => [
+        { id: 1, studentId: 7, courseId: 10, remainingLessons: 5, status: 'active', validUntil: null },
+      ],
+    };
+    const bookingRepo: any = {
+      find: async () => [
+        { lessonId: 21, status: 'booked', lesson: { date: D_SAT, startTime: '14:00', endTime: '15:30' } },
+      ],
+    };
+    service = new MiniService(
+      {} as any,
+      linkRepo,
+      {} as any,
+      lessonRepo,
+      pkgRepo,
+      bookingRepo,
+      courseRepo,
+      {} as any,
+      {} as any,
+    );
+  });
+
+  it('课次按时段(班级)分组,时段带周几/上下午/老师', async () => {
+    const result = await service.courseSlots(1, 7, 10);
+    expect(result.purchased).toBe(true);
+    expect(result.remaining).toBe(5);
+    expect(result.slots).toHaveLength(2);
+    expect(result.slots[0]).toEqual(
+      expect.objectContaining({ classId: 1, weekdayText: '周六', period: '上午' }),
+    );
+    expect(result.slots[1]).toEqual(
+      expect.objectContaining({ classId: 2, weekdayText: '周六', period: '下午' }),
+    );
+  });
+
+  it('满员课次 canBook=false,已预约课次标记"已预约",正常课次可约', async () => {
+    const result = await service.courseSlots(1, 7, 10);
+    const amLessons = result.slots[0].lessons as any[];
+    expect(amLessons.find((l) => l.id === 11).canBook).toBe(true);
+    expect(amLessons.find((l) => l.id === 12).reason).toBe('名额已满');
+    const pmLessons = result.slots[1].lessons as any[];
+    expect(pmLessons.find((l) => l.id === 21).reason).toBe('已预约');
   });
 });

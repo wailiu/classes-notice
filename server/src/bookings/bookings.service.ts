@@ -1,11 +1,33 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { Between, DataSource, EntityManager, In, Repository } from 'typeorm';
 import dayjs from 'dayjs';
 import { Booking, Lesson, CoursePackage, Student } from '../entities';
 
 /** 开课前多少小时内不允许(家长)取消预约 */
 export const CANCEL_DEADLINE_HOURS = Number(process.env.CANCEL_DEADLINE_HOURS || 2);
+
+/** 单次批量预约的课次数上限 */
+export const BATCH_MAX_LESSONS = 60;
+
+export interface BatchBookResult {
+  /** 本次请求覆盖的课次数 */
+  requested: number;
+  /** 预约成功的课次 */
+  booked: Array<{
+    bookingId: number;
+    lessonId: number;
+    date: string;
+    startTime: string;
+    endTime: string;
+  }>;
+  /** 失败课次及原因 */
+  failed: Array<{ lessonId: number; date: string | null; startTime: string | null; reason: string }>;
+  /** 实际扣除课时数(= booked.length) */
+  deducted: number;
+  /** 扣除后该课种剩余可用课时 */
+  remainingAfter: number;
+}
 
 @Injectable()
 export class BookingsService {
@@ -138,6 +160,213 @@ export class BookingsService {
   }
 
   /**
+   * 批量预约(单次多选 / 长期预约),同一课种、单事务:
+   * - 两种入参:lessonIds[](勾选若干课次) 或 classId+from+to(某时段/班级在日期范围内的全部课次,
+   *   即"长期预约:未来一个月每周六上午"这类场景)。
+   * - 与单次预约同一套规则:课种匹配、容量、时间冲突、未开始、学员在读。
+   * - 部分课次已满/已约/冲突:跳过并记录原因,其余继续(部分成功),不整批静默失败。
+   * - 课时不足以覆盖全部"可预约"课次时:拒绝整批(不扣任何课时),提示需要多少、剩多少,
+   *   绝不预约一半扣超。
+   * - 课时包加悲观行锁,防止并发超扣;扣课顺序与单次预约一致(先到期的先用)。
+   */
+  async bookBatch(params: {
+    studentId: number;
+    lessonIds?: number[];
+    classId?: number;
+    from?: string;
+    to?: string;
+    source?: string;
+    now?: Date;
+  }): Promise<BatchBookResult> {
+    const now = params.now ?? new Date();
+    return this.dataSource.transaction(async (em) => {
+      // ---------- 1. 解析目标课次 ----------
+      let lessons: Lesson[] = [];
+      const requestedIds: number[] = [];
+      if (params.classId && params.from && params.to) {
+        if (dayjs(params.to).diff(dayjs(params.from), 'day') > 92) {
+          throw new BadRequestException('长期预约日期范围最长 3 个月');
+        }
+        lessons = await em.find(Lesson, {
+          where: { classId: params.classId, date: Between(params.from, params.to) },
+          relations: { classEntity: true },
+        });
+      } else if (params.lessonIds && params.lessonIds.length > 0) {
+        const ids = [...new Set(params.lessonIds.map((id) => Number(id)))];
+        requestedIds.push(...ids);
+        lessons = await em.find(Lesson, {
+          where: { id: In(ids) },
+          relations: { classEntity: true },
+        });
+      } else {
+        throw new BadRequestException('请提供 lessonIds 或 classId+from+to');
+      }
+      if (lessons.length > BATCH_MAX_LESSONS) {
+        throw new BadRequestException(`单次批量预约最多 ${BATCH_MAX_LESSONS} 节`);
+      }
+      lessons.sort((a, b) => {
+        const ka = `${dayjs(a.date).format('YYYY-MM-DD')} ${a.startTime}`;
+        const kb = `${dayjs(b.date).format('YYYY-MM-DD')} ${b.startTime}`;
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
+      });
+
+      const failed: BatchBookResult['failed'] = [];
+      // lessonIds 里引用了不存在的课次:记为失败而不是整批报错
+      const foundIds = new Set(lessons.map((l) => l.id));
+      for (const id of requestedIds) {
+        if (!foundIds.has(id)) failed.push({ lessonId: id, date: null, startTime: null, reason: '课次不存在' });
+      }
+      if (lessons.length === 0) {
+        throw new BadRequestException('所选范围内没有可预约的课次');
+      }
+
+      // ---------- 2. 同一课种约束(课时严格按课种消耗,批量不允许混课种) ----------
+      const courseIds = new Set(lessons.map((l) => l.classEntity.courseId));
+      if (courseIds.size > 1) {
+        throw new BadRequestException('批量预约仅支持同一课种的课次,请分开提交');
+      }
+      const courseId = lessons[0].classEntity.courseId;
+
+      // ---------- 3. 学员校验 ----------
+      const student = await em.findOne(Student, { where: { id: params.studentId } });
+      if (!student) throw new NotFoundException('学员不存在');
+      if (student.status !== 'active') throw new BadRequestException('学员已停课,无法预约');
+
+      // ---------- 4. 锁定该课种课时包(与单次预约同一套可用性规则) ----------
+      const sameCourse = await em.find(CoursePackage, {
+        where: { studentId: params.studentId, courseId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (sameCourse.length === 0) {
+        throw new BadRequestException('未购买该课种课时,无法预约');
+      }
+      const usablePkgs = this.filterUsablePackages(sameCourse, now);
+      if (usablePkgs.length === 0) {
+        const expiredOnly = sameCourse.every(
+          (p) =>
+            p.status === 'expired' ||
+            (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(dayjs(now))),
+        );
+        throw new BadRequestException(
+          expiredOnly ? '该课种课时包已过期,请先续费' : '该课种剩余课时不足,请先续费',
+        );
+      }
+      const totalUsable = usablePkgs.reduce((acc, p) => acc + p.remainingLessons, 0);
+
+      // ---------- 5. 学员现有有效预约(用于查重 + 时间冲突) ----------
+      const activeBookings = await em.find(Booking, {
+        where: { studentId: params.studentId, status: In(['booked', 'checked_in']) },
+        relations: { lesson: true },
+      });
+      const bookedLessonIds = new Set(activeBookings.map((b) => b.lessonId));
+      const occupied = activeBookings
+        .filter((b) => b.lesson)
+        .map((b) => ({
+          date: dayjs(b.lesson.date).format('YYYY-MM-DD'),
+          startTime: b.lesson.startTime,
+          endTime: b.lesson.endTime,
+        }));
+
+      // ---------- 6. 逐节校验,可约的进入待扣列表(批内互相也要查重/查冲突) ----------
+      const bookable: Lesson[] = [];
+      for (const lesson of lessons) {
+        const date = dayjs(lesson.date).format('YYYY-MM-DD');
+        const fail = (reason: string) =>
+          failed.push({ lessonId: lesson.id, date, startTime: lesson.startTime, reason });
+
+        if (lesson.status !== 'scheduled') {
+          fail('该课次不可预约(已取消或已结课)');
+          continue;
+        }
+        if (!dayjs(`${date} ${lesson.startTime}`).isAfter(dayjs(now))) {
+          fail('该课次已开始,无法预约');
+          continue;
+        }
+        if (bookedLessonIds.has(lesson.id)) {
+          fail('已预约本课次');
+          continue;
+        }
+        const bookedCount = await em.count(Booking, {
+          where: { lessonId: lesson.id, status: In(['booked', 'checked_in']) },
+        });
+        if (bookedCount >= lesson.classEntity.capacity) {
+          fail('名额已满');
+          continue;
+        }
+        const overlap = occupied.find(
+          (o) => o.date === date && o.startTime < lesson.endTime && lesson.startTime < o.endTime,
+        );
+        if (overlap) {
+          fail('同一时间段已有其他预约,时间冲突');
+          continue;
+        }
+        bookable.push(lesson);
+        bookedLessonIds.add(lesson.id);
+        occupied.push({ date, startTime: lesson.startTime, endTime: lesson.endTime });
+      }
+
+      if (bookable.length === 0) {
+        return {
+          requested: lessons.length + failed.filter((f) => f.reason === '课次不存在').length,
+          booked: [],
+          failed,
+          deducted: 0,
+          remainingAfter: totalUsable,
+        };
+      }
+
+      // ---------- 7. 课时不足:拒绝整批,不扣任何课时,绝不超扣 ----------
+      if (totalUsable < bookable.length) {
+        throw new BadRequestException(
+          `该课种剩余课时不足:本次将预约 ${bookable.length} 节需扣 ${bookable.length} 课时,当前仅剩 ${totalUsable} 课时,请减少课次或先续费`,
+        );
+      }
+
+      // ---------- 8. 扣课时 + 落预约(先到期的包先用,与单次预约一致) ----------
+      usablePkgs.sort((a, b) => {
+        const aExp = a.validUntil ?? '9999-12-31';
+        const bExp = b.validUntil ?? '9999-12-31';
+        return aExp < bExp ? -1 : aExp > bExp ? 1 : 0;
+      });
+      const booked: BatchBookResult['booked'] = [];
+      let pkgIdx = 0;
+      const touchedPkgs = new Set<CoursePackage>();
+      for (const lesson of bookable) {
+        while (usablePkgs[pkgIdx].remainingLessons <= 0) pkgIdx += 1;
+        const pkg = usablePkgs[pkgIdx];
+        pkg.remainingLessons -= 1;
+        if (pkg.remainingLessons === 0) pkg.status = 'finished';
+        touchedPkgs.add(pkg);
+        const booking = await em.save(
+          em.create(Booking, {
+            studentId: params.studentId,
+            lessonId: lesson.id,
+            packageId: pkg.id,
+            status: 'booked',
+            source: params.source ?? 'parent',
+          }),
+        );
+        booked.push({
+          bookingId: booking.id,
+          lessonId: lesson.id,
+          date: dayjs(lesson.date).format('YYYY-MM-DD'),
+          startTime: lesson.startTime,
+          endTime: lesson.endTime,
+        });
+      }
+      for (const pkg of touchedPkgs) await em.save(pkg);
+
+      return {
+        requested: lessons.length + failed.filter((f) => f.reason === '课次不存在').length,
+        booked,
+        failed,
+        deducted: booked.length,
+        remainingAfter: totalUsable - booked.length,
+      };
+    });
+  }
+
+  /**
    * 取消预约:退回课时。
    * 家长端受"开课前 N 小时"限制,后台可强制取消。
    */
@@ -232,12 +461,7 @@ export class BookingsService {
     if (sameCourse.length === 0) {
       throw new BadRequestException('未购买该课种课时,无法预约');
     }
-    const usable = sameCourse.filter((p) => {
-      if (p.status !== 'active') return false;
-      if (p.remainingLessons <= 0) return false;
-      if (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(dayjs(now))) return false;
-      return true;
-    });
+    const usable = this.filterUsablePackages(sameCourse, now);
     if (usable.length === 0) {
       const expiredOnly = sameCourse.every(
         (p) =>
@@ -254,5 +478,15 @@ export class BookingsService {
       return aExp < bExp ? -1 : aExp > bExp ? 1 : 0;
     });
     return usable[0];
+  }
+
+  /** 可用课时包过滤:active、剩余>0、未过期(未绑定课种的包在查询阶段已排除) */
+  private filterUsablePackages(pkgs: CoursePackage[], now: Date): CoursePackage[] {
+    return pkgs.filter((p) => {
+      if (p.status !== 'active') return false;
+      if (p.remainingLessons <= 0) return false;
+      if (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(dayjs(now))) return false;
+      return true;
+    });
   }
 }
