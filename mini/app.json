@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/parent/home/home",
+    "pages/parent/schedule/schedule",
+    "pages/parent/bookings/bookings",
+    "pages/teacher/home/home",
+    "pages/teacher/roster/roster",
+    "pages/unbound/unbound"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#4f7cff",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "艺术培训学校",
+    "backgroundColor": "#f5f6fa"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

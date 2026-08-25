@@ -1,0 +1,42 @@
+.head .course {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.head .meta {
+  color: #909399;
+  font-size: 24rpx;
+  margin-top: 10rpx;
+}
+
+.row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.gender {
+  font-size: 22rpx;
+  color: #909399;
+  margin-left: 8rpx;
+}
+
+.parents {
+  margin-top: 12rpx;
+}
+
+.parent {
+  color: #4f7cff;
+  font-size: 24rpx;
+  padding: 4rpx 0;
+}
+
+.checkin-btn {
+  margin-top: 16rpx;
+  width: 100%;
+}

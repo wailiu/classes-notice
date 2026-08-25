@@ -1,0 +1,11 @@
+<view class="page">
+  <view class="card center">
+    <view class="icon">🔍</view>
+    <view class="title">未识别到您的身份</view>
+    <view class="desc">
+      您的微信尚未与本校家长或老师档案绑定。\n请联系前台工作人员,提供您的手机号完成绑定后,即可使用预约功能。
+    </view>
+    <button class="btn-primary big-btn" bindtap="call">📞 联系前台</button>
+    <button class="big-btn outline" bindtap="backToLogin">返回登录页</button>
+  </view>
+</view>

@@ -1,0 +1,54 @@
+.header {
+  background: linear-gradient(135deg, #23b26d, #45c98a);
+  color: #fff;
+}
+
+.hello {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.sub {
+  font-size: 24rpx;
+  opacity: 0.85;
+  margin-top: 8rpx;
+}
+
+.day-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #666;
+  margin: 20rpx 24rpx 0;
+}
+
+.row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.course {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.row2 {
+  display: flex;
+  gap: 24rpx;
+  color: #909399;
+  font-size: 24rpx;
+  margin-top: 12rpx;
+  flex-wrap: wrap;
+}
+
+.link {
+  color: #4f7cff;
+  margin-left: auto;
+}
+
+.logout {
+  text-align: center;
+  color: #b0b3bb;
+  font-size: 24rpx;
+  margin: 30rpx 0;
+}

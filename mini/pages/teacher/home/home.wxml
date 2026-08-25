@@ -1,0 +1,35 @@
+<view class="page">
+  <view class="header card">
+    <view class="hello">{{profile.name || '老师'}} 老师,您好 👋</view>
+    <view class="sub">{{profile.subjects || ''}} · 未来两周课程安排</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!grouped.length}}" class="empty">未来两周暂无排课</view>
+
+  <view wx:for="{{grouped}}" wx:key="date" wx:for-item="day" class="day-block">
+    <view class="day-title">{{day.date}} {{day.weekday}}</view>
+    <view
+      class="card lesson"
+      wx:for="{{day.list}}"
+      wx:key="id"
+      wx:for-item="lesson"
+      data-id="{{lesson.id}}"
+      bindtap="goRoster"
+    >
+      <view class="row1">
+        <view class="course">{{lesson.courseName}} · {{lesson.className}}</view>
+        <text class="tag {{lesson.bookedCount >= lesson.capacity ? 'tag-red' : 'tag-blue'}}">
+          {{lesson.bookedCount}}/{{lesson.capacity}} 人
+        </text>
+      </view>
+      <view class="row2">
+        <text>🕐 {{lesson.startTime}}-{{lesson.endTime}}</text>
+        <text>📍 {{lesson.room}}</text>
+        <text class="link">查看名单 ›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="logout" bindtap="logout">退出登录</view>
+</view>

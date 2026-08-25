@@ -1,0 +1,26 @@
+{
+  "description": "艺术培训学校 - 家长/老师小程序",
+  "projectname": "art-school-mini",
+  "appid": "touristappid",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "ignoreDevUnusedFiles": false,
+    "ignoreUploadUnusedFiles": false
+  },
+  "libVersion": "3.5.0",
+  "srcMiniprogramRoot": "./",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  }
+}

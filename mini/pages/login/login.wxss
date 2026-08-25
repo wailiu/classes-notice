@@ -1,0 +1,40 @@
+.hero {
+  text-align: center;
+  padding: 100rpx 0 40rpx;
+}
+
+.logo {
+  font-size: 100rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 700;
+  margin-top: 16rpx;
+}
+
+.subtitle {
+  color: #909399;
+  font-size: 24rpx;
+  margin-top: 12rpx;
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+.desc {
+  text-align: center;
+  color: #b0b3bb;
+  font-size: 22rpx;
+  margin-top: 16rpx;
+}
+
+.dev-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #f59a23;
+  margin-bottom: 16rpx;
+}
+
+.mock-btn {
+  margin: 8rpx 8rpx 8rpx 0;
+}
