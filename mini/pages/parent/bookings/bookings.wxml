@@ -1,0 +1,26 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!items.length}}" class="empty">暂无预约记录</view>
+
+  <view class="card" wx:for="{{items}}" wx:key="id">
+    <view class="row1">
+      <view class="course">{{item.courseName}} · {{item.className}}</view>
+      <text class="tag {{item.statusTag}}">{{item.statusText}}</text>
+    </view>
+    <view class="row2">
+      <text>📅 {{item.date}} {{item.startTime}}-{{item.endTime}}</text>
+      <text>📍 {{item.room}}</text>
+      <text>👩‍🏫 {{item.teacherName}}</text>
+    </view>
+    <view class="row3" wx:if="{{item.packageName}}">扣课时包:{{item.packageName}}</view>
+    <button
+      wx:if="{{item.canCancel}}"
+      class="cancel-btn"
+      size="mini"
+      data-id="{{item.id}}"
+      bindtap="cancel"
+    >
+      取消预约
+    </button>
+  </view>
+</view>

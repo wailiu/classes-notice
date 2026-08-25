@@ -1,0 +1,30 @@
+version: "3.8"
+
+# 一键启动 MySQL:docker compose up -d
+# 连接信息与 .env.example 保持一致
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: art-school-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: art_school
+      MYSQL_USER: art
+      MYSQL_PASSWORD: art123456
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uart", "-part123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mysql_data:

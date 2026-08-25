@@ -1,0 +1,43 @@
+<view class="page">
+  <view class="card head" wx:if="{{lesson}}">
+    <view class="course">{{lesson.courseName}} · {{lesson.className}}</view>
+    <view class="meta">
+      📅 {{lesson.date}} {{lesson.startTime}}-{{lesson.endTime}} · 📍 {{lesson.room}}
+      · {{students.length}}/{{lesson.capacity}} 人
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!students.length}}" class="empty">本课次暂无预约学员</view>
+
+  <view class="card" wx:for="{{students}}" wx:key="bookingId">
+    <view class="row1">
+      <view class="name">
+        {{item.name}}
+        <text class="gender">{{item.gender === 'male' ? '男' : (item.gender === 'female' ? '女' : '')}}</text>
+      </view>
+      <text class="tag {{item.statusTag}}">{{item.statusText}}</text>
+    </view>
+    <view class="parents" wx:if="{{item.parents.length}}">
+      <view
+        class="parent"
+        wx:for="{{item.parents}}"
+        wx:key="phone"
+        wx:for-item="p"
+        data-phone="{{p.phone}}"
+        bindtap="call"
+      >
+        {{p.relation}}:{{p.phone}} 📞
+      </view>
+    </view>
+    <button
+      wx:if="{{item.status === 'booked'}}"
+      class="btn-primary checkin-btn"
+      size="mini"
+      data-id="{{item.bookingId}}"
+      bindtap="checkin"
+    >
+      签到
+    </button>
+  </view>
+</view>

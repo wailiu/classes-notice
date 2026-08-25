@@ -1,0 +1,30 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!grouped.length}}" class="empty">未来两周暂无可预约课次</view>
+
+  <view wx:for="{{grouped}}" wx:key="date" wx:for-item="day" class="day-block">
+    <view class="day-title">{{day.date}} {{day.weekday}}</view>
+    <view class="card lesson" wx:for="{{day.list}}" wx:key="id" wx:for-item="lesson">
+      <view class="row1">
+        <view class="course">{{lesson.courseName}} · {{lesson.className}}</view>
+        <text wx:if="{{lesson.alreadyBooked}}" class="tag tag-green">已预约</text>
+        <text wx:elif="{{lesson.remainingSeats <= 0}}" class="tag tag-red">已满</text>
+        <text wx:else class="tag tag-blue">余位 {{lesson.remainingSeats}}</text>
+      </view>
+      <view class="row2">
+        <text>🕐 {{lesson.startTime}}-{{lesson.endTime}}</text>
+        <text>📍 {{lesson.room}}</text>
+        <text>👩‍🏫 {{lesson.teacherName}}</text>
+      </view>
+      <button
+        class="btn-primary book-btn"
+        size="mini"
+        disabled="{{lesson.alreadyBooked || lesson.remainingSeats <= 0 || booking}}"
+        data-id="{{lesson.id}}"
+        bindtap="book"
+      >
+        {{lesson.alreadyBooked ? '已预约' : (lesson.remainingSeats <= 0 ? '名额已满' : '预约')}}
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,36 @@
+.center {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  margin-top: 120rpx;
+}
+
+.icon {
+  font-size: 90rpx;
+}
+
+.title {
+  font-size: 34rpx;
+  font-weight: 700;
+  margin-top: 20rpx;
+}
+
+.desc {
+  color: #909399;
+  font-size: 26rpx;
+  margin: 20rpx 0 40rpx;
+  white-space: pre-line;
+  line-height: 1.7;
+}
+
+.big-btn {
+  width: 100%;
+  margin-top: 20rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.outline {
+  background: #fff;
+  color: #4f7cff;
+  border: 1rpx solid #4f7cff;
+}

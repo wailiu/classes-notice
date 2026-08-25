@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="hero">
+    <view class="logo">🎨</view>
+    <view class="title">艺术培训学校</view>
+    <view class="subtitle">素描 · 创意美术 · 书法 · 声乐\n钢琴 · 古筝 · 架子鼓 · 拉丁舞</view>
+  </view>
+
+  <view class="card">
+    <button class="btn-primary" loading="{{loading}}" bindtap="wxLogin">微信一键登录</button>
+    <view class="desc">登录后自动识别家长 / 老师身份</view>
+  </view>
+
+  <view class="card" wx:if="{{devMock}}">
+    <view class="dev-title">开发模式 · 模拟身份登录</view>
+    <button class="mock-btn" size="mini" data-code="mock-parent-1" bindtap="mockLogin">家长(张爸爸,两个孩子)</button>
+    <button class="mock-btn" size="mini" data-code="mock-parent-2" bindtap="mockLogin">家长(刘妈妈)</button>
+    <button class="mock-btn" size="mini" data-code="mock-teacher-1" bindtap="mockLogin">老师(王雪,素描/创意美术)</button>
+    <button class="mock-btn" size="mini" data-code="mock-teacher-2" bindtap="mockLogin">老师(李墨,书法)</button>
+    <button class="mock-btn" size="mini" data-code="stranger-openid" bindtap="mockLogin">未绑定用户</button>
+    <view class="desc">需后端 .env 中 WX_MOCK=true(默认开启)</view>
+  </view>
+</view>
