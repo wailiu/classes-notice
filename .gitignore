@@ -1,0 +1,22 @@
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# 环境变量与密钥
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器
+.idea/
+.vscode/
+.DS_Store
+
+# 小程序开发者工具私有配置
+mini/project.private.config.json
