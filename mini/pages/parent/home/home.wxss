@@ -1,17 +1,19 @@
 .header {
-  background: linear-gradient(135deg, #4f7cff, #6f9bff);
+  background: linear-gradient(135deg, #f0653a, #f2924f);
   color: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(232, 84, 44, 0.24);
 }
 
 .hello {
-  font-size: 34rpx;
+  font-size: 36rpx;
   font-weight: 600;
+  letter-spacing: 1rpx;
 }
 
 .sub {
   font-size: 24rpx;
-  opacity: 0.85;
-  margin-top: 8rpx;
+  opacity: 0.88;
+  margin-top: 10rpx;
 }
 
 .child-tabs {
@@ -22,32 +24,36 @@
 }
 
 .child-tab {
-  padding: 10rpx 30rpx;
-  border-radius: 30rpx;
-  background: #f0f1f5;
-  color: #666;
+  padding: 12rpx 32rpx;
+  border-radius: 999rpx;
+  background: #f1ede6;
+  color: #7a7266;
   font-size: 26rpx;
 }
 
 .child-tab.active {
-  background: #4f7cff;
+  background: #2b241c;
   color: #fff;
+  font-weight: 600;
 }
 
 .summary {
   text-align: center;
-  padding: 20rpx 0 30rpx;
+  padding: 24rpx 0 32rpx;
 }
 
 .big-num {
-  font-size: 72rpx;
+  font-size: 88rpx;
   font-weight: 700;
-  color: #4f7cff;
+  color: #e8542c;
+  line-height: 1.1;
 }
 
 .big-label {
-  color: #909399;
+  color: #948b7d;
   font-size: 24rpx;
+  letter-spacing: 2rpx;
+  margin-top: 4rpx;
 }
 
 .pkg-title {
@@ -56,31 +62,32 @@
 }
 
 .pkg {
-  border-top: 1rpx solid #f0f1f5;
-  padding: 16rpx 0;
+  border-top: 1rpx solid #f3efe8;
+  padding: 20rpx 0;
 }
 
 .pkg-name {
   font-size: 28rpx;
-  margin-bottom: 8rpx;
+  font-weight: 600;
+  margin-bottom: 10rpx;
 }
 
 .actions {
   display: flex;
   gap: 20rpx;
-  margin-top: 24rpx;
+  margin-top: 28rpx;
 }
 
 .action-btn {
   flex: 1;
   font-size: 28rpx;
-  border-radius: 12rpx;
+  border-radius: 999rpx;
 }
 
 .outline {
   background: #fff;
-  color: #4f7cff;
-  border: 1rpx solid #4f7cff;
+  color: #e8542c;
+  border: 2rpx solid #e8542c;
 }
 
 .empty {
@@ -89,7 +96,7 @@
 
 .logout {
   text-align: center;
-  color: #b0b3bb;
+  color: #b6ac9d;
   font-size: 24rpx;
-  margin: 30rpx 0;
+  margin: 32rpx 0;
 }

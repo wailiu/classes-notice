@@ -1,36 +1,45 @@
 .center {
   text-align: center;
-  padding: 80rpx 40rpx;
+  padding: 88rpx 48rpx;
   margin-top: 120rpx;
 }
 
 .icon {
-  font-size: 90rpx;
+  width: 152rpx;
+  height: 152rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #f7f3ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
 }
 
 .title {
   font-size: 34rpx;
   font-weight: 700;
-  margin-top: 20rpx;
+  letter-spacing: 1rpx;
+  margin-top: 28rpx;
 }
 
 .desc {
-  color: #909399;
+  color: #948b7d;
   font-size: 26rpx;
-  margin: 20rpx 0 40rpx;
+  margin: 24rpx 0 44rpx;
   white-space: pre-line;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .big-btn {
   width: 100%;
   margin-top: 20rpx;
-  border-radius: 12rpx;
+  border-radius: 999rpx;
   font-size: 28rpx;
 }
 
 .outline {
   background: #fff;
-  color: #4f7cff;
-  border: 1rpx solid #4f7cff;
+  color: #e8542c;
+  border: 2rpx solid #e8542c;
 }

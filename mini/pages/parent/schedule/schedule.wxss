@@ -1,7 +1,7 @@
 .tip {
-  margin: 20rpx 24rpx 0;
+  margin: 20rpx 28rpx 0;
   font-size: 24rpx;
-  color: #909399;
+  color: #948b7d;
 }
 
 .course-card {
@@ -21,41 +21,42 @@
 .course-name {
   font-size: 32rpx;
   font-weight: 600;
+  letter-spacing: 1rpx;
 }
 
 .slots {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx;
-  margin-top: 16rpx;
+  margin-top: 18rpx;
 }
 
 .slot-chip {
   font-size: 22rpx;
-  color: #4f7cff;
-  background: #eef3ff;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
+  color: #d95f38;
+  background: #fbf0e8;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
 }
 
 .slot-chip.none {
-  color: #b0b3bb;
-  background: #f0f1f5;
+  color: #b6ac9d;
+  background: #f1ede6;
 }
 
 .row3 {
-  margin-top: 16rpx;
+  margin-top: 18rpx;
   display: flex;
   justify-content: flex-end;
 }
 
 .go {
   font-size: 26rpx;
-  color: #4f7cff;
-  font-weight: 500;
+  color: #e8542c;
+  font-weight: 600;
 }
 
 .no-book {
   font-size: 24rpx;
-  color: #e6a23c;
+  color: #dd7a1c;
 }

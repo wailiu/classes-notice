@@ -12,24 +12,24 @@
 .row2 {
   display: flex;
   gap: 20rpx;
-  color: #909399;
+  color: #948b7d;
   font-size: 24rpx;
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   flex-wrap: wrap;
 }
 
 .row3 {
-  color: #b0b3bb;
+  color: #b6ac9d;
   font-size: 22rpx;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
 }
 
 .cancel-btn {
-  margin-top: 16rpx;
+  margin-top: 20rpx;
   width: 100%;
   background: #fff;
-  color: #f0442c;
-  border: 1rpx solid #f0442c;
-  border-radius: 12rpx;
+  color: #d9483b;
+  border: 2rpx solid #e8a89f;
+  border-radius: 999rpx;
   font-size: 26rpx;
 }

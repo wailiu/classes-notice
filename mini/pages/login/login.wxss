@@ -1,37 +1,48 @@
 .hero {
   text-align: center;
-  padding: 100rpx 0 40rpx;
+  padding: 140rpx 0 56rpx;
 }
 
 .logo {
-  font-size: 100rpx;
+  width: 168rpx;
+  height: 168rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 12rpx 32rpx rgba(96, 74, 52, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 92rpx;
 }
 
 .title {
   font-size: 44rpx;
   font-weight: 700;
-  margin-top: 16rpx;
+  letter-spacing: 4rpx;
+  margin-top: 32rpx;
 }
 
 .subtitle {
-  color: #909399;
+  color: #948b7d;
   font-size: 24rpx;
-  margin-top: 12rpx;
+  margin-top: 16rpx;
   white-space: pre-line;
-  line-height: 1.7;
+  line-height: 1.8;
+  letter-spacing: 2rpx;
 }
 
 .desc {
   text-align: center;
-  color: #b0b3bb;
+  color: #b6ac9d;
   font-size: 22rpx;
-  margin-top: 16rpx;
+  margin-top: 20rpx;
 }
 
 .dev-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #f59a23;
+  color: #dd7a1c;
   margin-bottom: 16rpx;
 }
 

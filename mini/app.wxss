@@ -1,65 +1,81 @@
+/* 设计基调:暖纸面 + 朱红点缀,画廊式留白 */
 page {
-  background: #f5f6fa;
+  background: #f7f3ec;
   font-size: 28rpx;
-  color: #333;
+  color: #2b241c;
+  line-height: 1.5;
+}
+
+button::after {
+  border: none;
 }
 
 .card {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin: 24rpx;
+  box-shadow: 0 8rpx 28rpx rgba(96, 74, 52, 0.07);
 }
 
 .btn-primary {
-  background: #4f7cff;
+  background: linear-gradient(135deg, #f0653a, #e8542c);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: 999rpx;
   font-size: 30rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 20rpx rgba(232, 84, 44, 0.26);
 }
 
 .btn-primary[disabled] {
-  background: #b9c8f5;
+  background: #f2cabb;
   color: #fff;
+  box-shadow: none;
+}
+
+.btn-outline {
+  background: #fff;
+  color: #e8542c;
+  border: 2rpx solid #e8542c;
+  border-radius: 999rpx;
 }
 
 .tag {
   display: inline-block;
   font-size: 22rpx;
-  padding: 4rpx 14rpx;
-  border-radius: 8rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
   margin-right: 8rpx;
 }
 
 .tag-blue {
-  background: #e8f0ff;
-  color: #4f7cff;
+  background: #eef1fc;
+  color: #5a6fd6;
 }
 
 .tag-green {
-  background: #e7f9ef;
-  color: #23b26d;
+  background: #e8f6ec;
+  color: #1f9d55;
 }
 
 .tag-orange {
-  background: #fff3e0;
-  color: #f59a23;
+  background: #fdf0e2;
+  color: #dd7a1c;
 }
 
 .tag-red {
-  background: #ffece8;
-  color: #f0442c;
+  background: #fdecea;
+  color: #d9483b;
 }
 
 .tag-gray {
-  background: #f0f1f5;
-  color: #909399;
+  background: #f1ede6;
+  color: #948b7d;
 }
 
 .empty {
   text-align: center;
-  color: #b0b3bb;
+  color: #b6ac9d;
   padding: 80rpx 0;
   font-size: 26rpx;
 }

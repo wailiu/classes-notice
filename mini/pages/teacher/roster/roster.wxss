@@ -4,9 +4,9 @@
 }
 
 .head .meta {
-  color: #909399;
+  color: #948b7d;
   font-size: 24rpx;
-  margin-top: 10rpx;
+  margin-top: 12rpx;
 }
 
 .row1 {
@@ -22,7 +22,7 @@
 
 .gender {
   font-size: 22rpx;
-  color: #909399;
+  color: #948b7d;
   margin-left: 8rpx;
 }
 
@@ -31,12 +31,12 @@
 }
 
 .parent {
-  color: #4f7cff;
+  color: #e8542c;
   font-size: 24rpx;
   padding: 4rpx 0;
 }
 
 .checkin-btn {
-  margin-top: 16rpx;
+  margin-top: 20rpx;
   width: 100%;
 }
