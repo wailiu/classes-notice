@@ -1,34 +1,36 @@
 <view class="page">
   <view wx:if="{{loading}}" class="empty">加载中…</view>
-  <view wx:elif="{{!grouped.length}}" class="empty">未来两周暂无课次安排</view>
+  <view wx:elif="{{!courses.length}}" class="empty">暂无开设课种</view>
 
-  <view wx:for="{{grouped}}" wx:key="date" wx:for-item="day" class="day-block">
-    <view class="day-title">{{day.date}} {{day.weekday}}</view>
-    <view class="card lesson" wx:for="{{day.list}}" wx:key="id" wx:for-item="lesson">
-      <view class="row1">
-        <view class="course">{{lesson.courseName}} · {{lesson.className}}</view>
-        <text wx:if="{{lesson.alreadyBooked}}" class="tag tag-green">已预约</text>
-        <text wx:elif="{{lesson.remainingSeats <= 0}}" class="tag tag-red">已满</text>
-        <text wx:elif="{{!lesson.canBook}}" class="tag tag-gray">{{lesson.reason}}</text>
-        <text wx:else class="tag tag-blue">余位 {{lesson.remainingSeats}}</text>
-      </view>
-      <view class="row2">
-        <text>🕐 {{lesson.startTime}}-{{lesson.endTime}}</text>
-        <text>📍 {{lesson.room}}</text>
-        <text>👩‍🏫 {{lesson.teacherName}}</text>
-      </view>
-      <view wx:if="{{!lesson.canBook && !lesson.alreadyBooked && lesson.remainingSeats > 0}}" class="no-book-tip">
-        {{lesson.reason === '未购买该课种' ? '未购买该课种课时,请联系前台报名后再预约' : '该课种剩余课时不足,请先续费'}}
-      </view>
-      <button
-        class="btn-primary book-btn"
-        size="mini"
-        disabled="{{!lesson.canBook || booking}}"
-        data-id="{{lesson.id}}"
-        bindtap="book"
-      >
-        {{lesson.canBook ? '预约' : lesson.reason}}
-      </button>
+  <view wx:if="{{!loading && courses.length}}" class="tip">已购课种置顶,点击进入选择上课时段</view>
+
+  <view
+    wx:for="{{courses}}"
+    wx:key="courseId"
+    wx:for-item="course"
+    class="card course-card {{course.bookable ? '' : 'disabled'}}"
+    data-id="{{course.courseId}}"
+    bindtap="enterCourse"
+  >
+    <view class="row1">
+      <view class="course-name">{{course.courseName}}</view>
+      <text wx:if="{{course.bookable}}" class="tag tag-green">剩 {{course.remaining}} 课时</text>
+      <text wx:elif="{{course.purchased}}" class="tag tag-red">课时不足</text>
+      <text wx:else class="tag tag-gray">未购买</text>
+    </view>
+
+    <view class="slots" wx:if="{{course.slots.length}}">
+      <text class="slot-chip" wx:for="{{course.slots}}" wx:key="classId" wx:for-item="slot">
+        {{slot.weekdayText}}{{slot.period}} {{slot.startTime}}-{{slot.endTime}}
+      </text>
+    </view>
+    <view class="slots" wx:else>
+      <text class="slot-chip none">暂未排课</text>
+    </view>
+
+    <view class="row3">
+      <text wx:if="{{course.bookable}}" class="go">选择时段预约 ›</text>
+      <text wx:else class="no-book">{{course.reason}}</text>
     </view>
   </view>
 </view>

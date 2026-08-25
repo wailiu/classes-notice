@@ -3,6 +3,7 @@
     "pages/login/login",
     "pages/parent/home/home",
     "pages/parent/schedule/schedule",
+    "pages/parent/slots/slots",
     "pages/parent/bookings/bookings",
     "pages/teacher/home/home",
     "pages/teacher/roster/roster",
