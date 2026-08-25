@@ -13,46 +13,6 @@
   font-weight: 600;
 }
 
-.section-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-
-/* ---------- 时段选择 ---------- */
-.slot-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
-.slot-item {
-  flex: 1 1 42%;
-  border: 2rpx solid #e4e7ed;
-  border-radius: 12rpx;
-  padding: 16rpx;
-}
-
-.slot-item.active {
-  border-color: #4f7cff;
-  background: #eef3ff;
-}
-
-.slot-main {
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.slot-item.active .slot-main {
-  color: #4f7cff;
-}
-
-.slot-sub {
-  font-size: 22rpx;
-  color: #909399;
-  margin-top: 6rpx;
-}
-
 /* ---------- 预约方式 ---------- */
 .mode-tabs {
   display: flex;
@@ -78,6 +38,31 @@
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
 }
 
+/* ---------- 时段筛选(仅辅助浏览,不限制勾选) ---------- */
+.filter-bar {
+  display: flex;
+  flex-direction: row;
+  white-space: nowrap;
+  margin-bottom: 16rpx;
+}
+
+.chip {
+  display: inline-block;
+  border: 2rpx solid #e4e7ed;
+  border-radius: 999rpx;
+  padding: 10rpx 24rpx;
+  margin-right: 12rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.chip.active {
+  border-color: #4f7cff;
+  background: #eef3ff;
+  color: #4f7cff;
+  font-weight: 600;
+}
+
 .list-head {
   display: flex;
   align-items: center;
@@ -95,6 +80,23 @@
   color: #4f7cff;
 }
 
+.sub-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin: 20rpx 0 12rpx;
+}
+
+.sub-title:first-child {
+  margin-top: 0;
+}
+
+.sub-tip {
+  font-size: 22rpx;
+  font-weight: 400;
+  color: #909399;
+  margin-left: 12rpx;
+}
+
 /* ---------- 课次勾选 ---------- */
 .lesson-row {
   display: flex;
@@ -109,6 +111,22 @@
 }
 
 .lesson-row.checked {
+  background: #f6f9ff;
+}
+
+/* ---------- 每周课程勾选(长期预约) ---------- */
+.pattern-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  border: 2rpx solid #e4e7ed;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.pattern-row.checked {
+  border-color: #4f7cff;
   background: #f6f9ff;
 }
 
@@ -148,7 +166,7 @@
 .range-opts {
   display: flex;
   gap: 16rpx;
-  margin: 16rpx 0;
+  margin-bottom: 8rpx;
 }
 
 .range-opt {
@@ -167,13 +185,11 @@
   font-weight: 600;
 }
 
-.preview {
+.lt-summary {
   background: #f8f9fc;
   border-radius: 12rpx;
   padding: 20rpx;
-}
-
-.preview-line {
+  margin-top: 16rpx;
   font-size: 26rpx;
 }
 
@@ -182,25 +198,10 @@
   font-weight: 600;
 }
 
-.preview-warn {
+.lt-warn {
   margin-top: 12rpx;
   font-size: 24rpx;
   color: #f0442c;
-}
-
-.preview-blocked {
-  margin-top: 12rpx;
-}
-
-.blocked-title {
-  font-size: 24rpx;
-  color: #e6a23c;
-}
-
-.blocked-item {
-  font-size: 22rpx;
-  color: #909399;
-  margin-top: 6rpx;
 }
 
 /* ---------- 底部提交栏 ---------- */

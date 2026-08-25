@@ -16,6 +16,8 @@ describe('BookingsService.bookBatch 批量/长期预约', () => {
 
   // 素描·周六上午班(classId=1,课种 10),未来 4 个周六
   const SAT_DATES = ['2026-08-29', '2026-09-05', '2026-09-12', '2026-09-19'];
+  // 素描·周日下午班(classId=2,同课种 10、不同 weekday),用于跨时段多选
+  const SUN_DATES = ['2026-08-30', '2026-09-06'];
 
   let lessons: any[];
   let students: any[];
@@ -109,6 +111,18 @@ describe('BookingsService.bookBatch 批量/长期预约', () => {
       status: 'scheduled',
       classEntity: satMorning,
     }));
+    const sunAfternoon = { id: 2, capacity: 8, courseId: 10 };
+    lessons.push(
+      ...SUN_DATES.map((date, i) => ({
+        id: 400 + i,
+        classId: 2,
+        date,
+        startTime: '14:00',
+        endTime: '15:30',
+        status: 'scheduled',
+        classEntity: sunAfternoon,
+      })),
+    );
     // 一节钢琴课(课种 20),用于混课种校验
     lessons.push({
       id: 300,
@@ -216,6 +230,21 @@ describe('BookingsService.bookBatch 批量/长期预约', () => {
     ]);
     expect(result.deducted).toBe(2);
     expect(packages.find((p) => p.id === 500)!.remainingLessons).toBe(8);
+  });
+
+  it('跨时段多选:同课种不同 weekday 的多个班级课次一批提交,全部成功', async () => {
+    // 页面「全部课次同屏多选」场景:勾选周六上午 ×2 + 周日下午 ×2 一次提交
+    const result = await service.bookBatch({
+      studentId: 1,
+      lessonIds: [200, 400, 201, 401],
+      now: NOW,
+    });
+    expect(result.booked.map((b) => b.lessonId)).toEqual([200, 400, 201, 401]); // 按日期时间排序
+    expect(result.failed).toHaveLength(0);
+    expect(result.deducted).toBe(4);
+    expect(result.remainingAfter).toBe(6);
+    expect(packages.find((p) => p.id === 500)!.remainingLessons).toBe(6);
+    expect(new Set(bookings.map((b) => b.lessonId))).toEqual(new Set([200, 201, 400, 401]));
   });
 
   it('混课种 lessonIds 被拒绝(课时严格按课种消耗)', async () => {

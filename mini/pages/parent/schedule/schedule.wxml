@@ -2,7 +2,7 @@
   <view wx:if="{{loading}}" class="empty">加载中…</view>
   <view wx:elif="{{!courses.length}}" class="empty">暂无开设课种</view>
 
-  <view wx:if="{{!loading && courses.length}}" class="tip">已购课种置顶,点击进入选择上课时段</view>
+  <view wx:if="{{!loading && courses.length}}" class="tip">已购课种置顶,点击进入查看全部课次并勾选预约</view>
 
   <view
     wx:for="{{courses}}"
@@ -29,7 +29,7 @@
     </view>
 
     <view class="row3">
-      <text wx:if="{{course.bookable}}" class="go">选择时段预约 ›</text>
+      <text wx:if="{{course.bookable}}" class="go">查看课次预约 ›</text>
       <text wx:else class="no-book">{{course.reason}}</text>
     </view>
   </view>
