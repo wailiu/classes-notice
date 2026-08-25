@@ -14,11 +14,13 @@ function addDays(base, days) {
 }
 
 /**
- * 选时段预约页:
- * 1. 先选时段(该课种下的班级模板:周几 + 上/下午 + 时间 + 老师 + 教室)
- * 2. 单次预约:勾选该时段未来若干次课(可多选)后提交
- * 3. 长期预约:选日期范围(未来两周/一个月)一键预约该时段范围内全部课次
- * 提交走服务端批量接口,返回成功/失败清单与实际扣课时数。
+ * 课种预约页:
+ * 1. 单次预约:该课种全部每周时段的课次同屏展示(如素描周六上午/周六下午/周日上午/周日下午
+ *    全部列出),可跨时段任意勾选,时段筛选项仅辅助浏览,不限制勾选范围。
+ * 2. 长期预约:先勾选要每周重复的课程(默认全选),再选日期范围,页面列出范围内全部对应
+ *    课次;可约课次默认勾选、可单节取消,不可约课次展示原因。
+ * 两种方式都按最终勾选的课次(lessonIds)提交服务端批量接口,页面所见即所约;
+ * 返回成功/失败清单与实际扣课时数。
  */
 Page({
   data: {
@@ -30,16 +32,23 @@ Page({
     submitting: false,
     remaining: 0,
     slots: [],
-    slotIndex: 0,
-    mode: 'single', // single=单次(勾选) longterm=长期(按范围)
-    lessons: [], // 当前时段课次(带 checked)
+    allLessons: [], // 该课种全部时段的课次,拉平后按日期+时间排序
+    mode: 'single', // single=单次(跨时段勾选) longterm=长期(按周课程×范围)
+    // ---- 单次预约 ----
+    filterClassId: 0, // 0=全部时段,仅用于浏览过滤,勾选跨筛选保留
+    filterOptions: [],
+    lessons: [], // 当前筛选下可见课次
     selectedCount: 0,
+    // ---- 长期预约 ----
+    patterns: [], // 每周课程(班级模板)勾选列表
     rangeDays: 30,
     rangeOptions: [
       { days: 14, label: '未来两周' },
       { days: 30, label: '未来一个月' },
     ],
-    preview: { total: 0, bookable: 0, blocked: [] },
+    ltLessons: [], // 范围内对应课次(可约默认勾选)
+    ltSelectedCount: 0,
+    ltBlockedCount: 0,
     result: null, // 提交结果面板
   },
 
@@ -51,7 +60,7 @@ Page({
       studentName: decodeURIComponent(options.name || ''),
     });
     wx.setNavigationBarTitle({
-      title: `${decodeURIComponent(options.courseName || '')} · 选时段预约`,
+      title: `${decodeURIComponent(options.courseName || '')} · 预约`,
     });
     this.load();
   },
@@ -63,92 +72,164 @@ Page({
         studentId: this.data.studentId,
         days: 35,
       });
-      const slotIndex = Math.min(this.data.slotIndex, Math.max(0, data.slots.length - 1));
+      const allLessons = [];
+      for (const slot of data.slots) {
+        for (const l of slot.lessons) {
+          allLessons.push({
+            ...l,
+            classId: slot.classId,
+            period: slot.period,
+            slotLabel: `${slot.weekdayText}${slot.period}`,
+            teacherName: slot.teacherName,
+            room: slot.room,
+            checked: false,
+          });
+        }
+      }
+      allLessons.sort((a, b) => {
+        const ka = `${a.date} ${a.startTime}`;
+        const kb = `${b.date} ${b.startTime}`;
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
+      });
       this.setData({
         remaining: data.remaining,
         slots: data.slots,
-        slotIndex,
+        allLessons,
+        filterClassId: 0,
+        filterOptions: [
+          { classId: 0, label: '全部时段' },
+          ...data.slots.map((s) => ({
+            classId: s.classId,
+            label: `${s.weekdayText}${s.period}`,
+          })),
+        ],
+        // 默认全选每周课程:切到长期预约立即能看到范围内全部课次
+        patterns: data.slots.map((s) => ({
+          classId: s.classId,
+          label: `${s.weekdayText}${s.period}`,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          teacherName: s.teacherName,
+          room: s.room,
+          checked: true,
+        })),
       });
-      this.refreshSlotViews();
+      this.refreshSingleList();
+      this.rebuildLongterm();
     } finally {
       this.setData({ loading: false });
     }
-  },
-
-  /** 切换时段后重建课次勾选列表与长期预约预览 */
-  refreshSlotViews() {
-    const slot = this.data.slots[this.data.slotIndex];
-    const lessons = ((slot && slot.lessons) || []).map((l) => ({ ...l, checked: false }));
-    this.setData({ lessons, selectedCount: 0 });
-    this.computePreview();
-  },
-
-  selectSlot(e) {
-    const index = Number(e.currentTarget.dataset.index);
-    if (index === this.data.slotIndex) return;
-    this.setData({ slotIndex: index });
-    this.refreshSlotViews();
   },
 
   switchMode(e) {
     this.setData({ mode: e.currentTarget.dataset.mode });
   },
 
-  toggleLesson(e) {
-    const id = Number(e.currentTarget.dataset.id);
-    const lessons = this.data.lessons.map((l) => {
-      if (l.id !== id) return l;
-      if (!l.canBook) {
-        wx.showToast({ title: l.reason, icon: 'none' });
-        return l;
-      }
-      return { ...l, checked: !l.checked };
-    });
+  // ---------- 单次预约:全部课次同屏 + 跨时段多选 ----------
+
+  /** 按筛选重建可见列表;已选节数按全量统计,切换筛选不丢勾选 */
+  refreshSingleList() {
+    const { allLessons, filterClassId } = this.data;
+    const lessons = filterClassId
+      ? allLessons.filter((l) => l.classId === filterClassId)
+      : allLessons;
     this.setData({
       lessons,
-      selectedCount: lessons.filter((l) => l.checked).length,
+      selectedCount: allLessons.filter((l) => l.checked).length,
     });
   },
 
-  selectAllBookable() {
-    const someUnchecked = this.data.lessons.some((l) => l.canBook && !l.checked);
-    const lessons = this.data.lessons.map((l) =>
-      l.canBook ? { ...l, checked: someUnchecked } : l,
-    );
+  setFilter(e) {
+    const classId = Number(e.currentTarget.dataset.classId);
+    if (classId === this.data.filterClassId) return;
+    this.setData({ filterClassId: classId });
+    this.refreshSingleList();
+  },
+
+  toggleLesson(e) {
+    const id = Number(e.currentTarget.dataset.id);
+    const target = this.data.allLessons.find((l) => l.id === id);
+    if (!target) return;
+    if (!target.canBook) {
+      wx.showToast({ title: target.reason, icon: 'none' });
+      return;
+    }
     this.setData({
-      lessons,
-      selectedCount: lessons.filter((l) => l.checked).length,
+      allLessons: this.data.allLessons.map((l) =>
+        l.id === id ? { ...l, checked: !l.checked } : l,
+      ),
     });
+    this.refreshSingleList();
+  },
+
+  /** 全选/取消全选当前筛选下的可约课次 */
+  selectAllBookable() {
+    const visibleIds = new Set(this.data.lessons.map((l) => l.id));
+    const someUnchecked = this.data.lessons.some((l) => l.canBook && !l.checked);
+    this.setData({
+      allLessons: this.data.allLessons.map((l) =>
+        visibleIds.has(l.id) && l.canBook ? { ...l, checked: someUnchecked } : l,
+      ),
+    });
+    this.refreshSingleList();
+  },
+
+  // ---------- 长期预约:勾选每周课程 × 日期范围 → 课次列表 ----------
+
+  togglePattern(e) {
+    const classId = Number(e.currentTarget.dataset.classId);
+    this.setData({
+      patterns: this.data.patterns.map((p) =>
+        p.classId === classId ? { ...p, checked: !p.checked } : p,
+      ),
+    });
+    this.rebuildLongterm();
   },
 
   setRange(e) {
-    this.setData({ rangeDays: Number(e.currentTarget.dataset.days) });
-    this.computePreview();
+    const days = Number(e.currentTarget.dataset.days);
+    if (days === this.data.rangeDays) return;
+    this.setData({ rangeDays: days });
+    this.rebuildLongterm();
   },
 
-  /** 长期预约预览:当前时段、日期范围内共几节、可约几节、不可约原因 */
-  computePreview() {
-    const slot = this.data.slots[this.data.slotIndex];
-    if (!slot) {
-      this.setData({ preview: { total: 0, bookable: 0, blocked: [] } });
-      return;
-    }
+  /** 重建长期预约课次列表:勾选的每周课程在范围内的全部课次,可约的默认勾选 */
+  rebuildLongterm() {
+    const checkedClassIds = new Set(
+      this.data.patterns.filter((p) => p.checked).map((p) => p.classId),
+    );
     const to = fmt(addDays(new Date(), this.data.rangeDays));
-    const inRange = slot.lessons.filter((l) => l.date <= to);
-    const blocked = inRange
-      .filter((l) => !l.canBook)
-      .map((l) => ({ date: l.date, weekdayText: l.weekdayText, reason: l.reason }));
+    const ltLessons = this.data.allLessons
+      .filter((l) => checkedClassIds.has(l.classId) && l.date <= to)
+      .map((l) => ({ ...l, ltChecked: l.canBook }));
     this.setData({
-      preview: {
-        total: inRange.length,
-        bookable: inRange.filter((l) => l.canBook).length,
-        blocked,
-      },
+      ltLessons,
+      ltSelectedCount: ltLessons.filter((l) => l.ltChecked).length,
+      ltBlockedCount: ltLessons.filter((l) => !l.canBook).length,
     });
   },
 
+  toggleLtLesson(e) {
+    const id = Number(e.currentTarget.dataset.id);
+    const target = this.data.ltLessons.find((l) => l.id === id);
+    if (!target) return;
+    if (!target.canBook) {
+      wx.showToast({ title: target.reason, icon: 'none' });
+      return;
+    }
+    const ltLessons = this.data.ltLessons.map((l) =>
+      l.id === id ? { ...l, ltChecked: !l.ltChecked } : l,
+    );
+    this.setData({
+      ltLessons,
+      ltSelectedCount: ltLessons.filter((l) => l.ltChecked && l.canBook).length,
+    });
+  },
+
+  // ---------- 提交 ----------
+
   async submitSingle() {
-    const selected = this.data.lessons.filter((l) => l.checked);
+    const selected = this.data.allLessons.filter((l) => l.checked);
     if (!selected.length) {
       wx.showToast({ title: '请先勾选课次', icon: 'none' });
       return;
@@ -167,29 +248,29 @@ Page({
   },
 
   async submitLongterm() {
-    const slot = this.data.slots[this.data.slotIndex];
-    const { preview, rangeDays, remaining } = this.data;
-    if (!slot || !preview.bookable) {
-      wx.showToast({ title: '该范围内没有可预约的课次', icon: 'none' });
+    const selected = this.data.ltLessons.filter((l) => l.ltChecked && l.canBook);
+    const { remaining, ltBlockedCount } = this.data;
+    if (!selected.length) {
+      wx.showToast({ title: '请先勾选每周课程与课次', icon: 'none' });
       return;
     }
-    if (preview.bookable > remaining) {
-      wx.showToast({ title: `剩余课时不足:需 ${preview.bookable} 课时,仅剩 ${remaining} 课时`, icon: 'none' });
+    if (selected.length > remaining) {
+      wx.showToast({ title: `剩余课时不足:需 ${selected.length} 课时,仅剩 ${remaining} 课时`, icon: 'none' });
       return;
     }
-    const rangeLabel = this.data.rangeOptions.find((o) => o.days === rangeDays).label;
-    const skipText = preview.blocked.length ? `,${preview.blocked.length} 节不可约将自动跳过` : '';
+    const rangeLabel = this.data.rangeOptions.find((o) => o.days === this.data.rangeDays).label;
+    const patternText = this.data.patterns
+      .filter((p) => p.checked)
+      .map((p) => p.label)
+      .join('、');
+    const skipText = ltBlockedCount ? `,${ltBlockedCount} 节不可约已跳过` : '';
     const ok = await this.confirm(
-      `长期预约:${rangeLabel}每${slot.weekdayText}${slot.period} ${slot.startTime}-${slot.endTime}。\n` +
-        `共 ${preview.total} 节,将预约 ${preview.bookable} 节、扣 ${preview.bookable} 课时${skipText}。\n` +
-        `当前剩余 ${remaining} 课时,预约后剩 ${remaining - preview.bookable} 课时。`,
+      `长期预约:${rangeLabel}每周 ${patternText}。\n` +
+        `将预约 ${selected.length} 节、扣 ${selected.length} 课时${skipText}。\n` +
+        `当前剩余 ${remaining} 课时,预约后剩 ${remaining - selected.length} 课时。`,
     );
     if (!ok) return;
-    await this.submitBatch({
-      classId: slot.classId,
-      from: fmt(new Date()),
-      to: fmt(addDays(new Date(), rangeDays)),
-    });
+    await this.submitBatch({ lessonIds: selected.map((l) => l.id) });
   },
 
   confirm(content) {

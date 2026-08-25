@@ -212,7 +212,7 @@ describe('MiniService.parentCourses 课种列表已购置顶', () => {
   });
 });
 
-/** 选时段页数据:课次按班级(时段)分组,canBook/reason 标记正确 */
+/** 预约页数据:全部时段(班级)及其课次都返回,canBook/reason 标记正确,前端拉平后同屏多选 */
 describe('MiniService.courseSlots 课种时段与课次', () => {
   const D_SAT = dayjs().add(3, 'day').format('YYYY-MM-DD');
   const D_SAT2 = dayjs().add(10, 'day').format('YYYY-MM-DD');
@@ -230,12 +230,17 @@ describe('MiniService.courseSlots 课种时段与课次', () => {
   let service: MiniService;
 
   beforeEach(() => {
+    // 素描四时段(周六/周日 × 上午/下午),对应“多节课必须全部展示”的真实课表
     const satAm = { id: 1, courseId: 10, name: '素描·周六上午班', weekday: 6, startTime: '10:00', endTime: '11:30', room: '101', capacity: 2, status: 'active', teacher: { name: '王雪' } };
     const satPm = { id: 2, courseId: 10, name: '素描·周六下午班', weekday: 6, startTime: '14:00', endTime: '15:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } };
+    const sunAm = { id: 3, courseId: 10, name: '素描·周日上午班', weekday: 7, startTime: '10:00', endTime: '11:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } };
+    const sunPm = { id: 4, courseId: 10, name: '素描·周日下午班', weekday: 7, startTime: '14:00', endTime: '15:30', room: '101', capacity: 8, status: 'active', teacher: { name: '王雪' } };
     const lessons = [
       makeLesson(11, D_SAT, satAm),
       makeLesson(12, D_SAT2, satAm, 2), // 满员
       makeLesson(21, D_SAT, satPm),
+      makeLesson(31, D_SAT, sunAm),
+      makeLesson(41, D_SAT, sunPm),
     ];
     const qb: any = {
       leftJoinAndSelect: () => qb,
@@ -272,17 +277,24 @@ describe('MiniService.courseSlots 课种时段与课次', () => {
     );
   });
 
-  it('课次按时段(班级)分组,时段带周几/上下午/老师', async () => {
+  it('四个时段全部返回且各带课次,时段带周几/上下午/老师', async () => {
     const result = await service.courseSlots(1, 7, 10);
     expect(result.purchased).toBe(true);
     expect(result.remaining).toBe(5);
-    expect(result.slots).toHaveLength(2);
+    expect(result.slots).toHaveLength(4);
+    expect(result.slots.map((s) => `${s.weekdayText}${s.period}`)).toEqual([
+      '周六上午',
+      '周六下午',
+      '周日上午',
+      '周日下午',
+    ]);
     expect(result.slots[0]).toEqual(
       expect.objectContaining({ classId: 1, weekdayText: '周六', period: '上午' }),
     );
-    expect(result.slots[1]).toEqual(
-      expect.objectContaining({ classId: 2, weekdayText: '周六', period: '下午' }),
-    );
+    // 每个时段都有课次:前端拉平后同屏展示、跨时段勾选
+    for (const slot of result.slots) {
+      expect((slot.lessons as any[]).length).toBeGreaterThan(0);
+    }
   });
 
   it('满员课次 canBook=false,已预约课次标记"已预约",正常课次可约', async () => {
