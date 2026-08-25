@@ -53,6 +53,12 @@ Page({
   async book(e) {
     const lessonId = Number(e.currentTarget.dataset.id);
     if (this.data.booking) return;
+    // 双保险:未购买该课种/课时不足等不可约课次,即使触发也直接提示并终止
+    const lesson = this.data.lessons.find((l) => l.id === lessonId);
+    if (lesson && !lesson.canBook) {
+      wx.showToast({ title: lesson.reason || '该课次不可预约', icon: 'none' });
+      return;
+    }
     const confirmed = await new Promise((resolve) =>
       wx.showModal({
         title: '确认预约',

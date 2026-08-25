@@ -21,7 +21,7 @@ export class CoursePackage {
   @Column()
   studentId: number;
 
-  @Column({ type: 'int', nullable: true, comment: '限定科目,NULL 表示通用课时包' })
+  @Column({ type: 'int', nullable: true, comment: '绑定课种;新建必填。历史 NULL(旧通用包)不可再用于预约' })
   courseId: number | null;
 
   @Column({ length: 100, comment: '课时包名称,如 "钢琴48课时包"' })

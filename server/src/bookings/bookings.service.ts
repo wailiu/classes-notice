@@ -51,7 +51,8 @@ export class BookingsService {
    * 3. 未重复预约同一课次
    * 4. 班级容量未满
    * 5. 同一时间段无冲突预约
-   * 6. 有可用课时包(匹配科目或通用、剩余>0、未过期),预约即扣 1 课时
+   * 6. 课时严格按课种消耗:仅可使用与该课次课种一致的课时包(剩余>0、未过期),
+   *    未绑定课种的"通用包"一律不可用于预约;预约即扣 1 课时
    */
   async book(params: {
     studentId: number;
@@ -117,7 +118,6 @@ export class BookingsService {
         this.assertPackageUsable(pkg, lesson.classEntity.courseId, now);
       } else {
         pkg = await this.pickPackage(em, params.studentId, lesson.classEntity.courseId, now);
-        if (!pkg) throw new BadRequestException('该学员没有可用课时包(科目不匹配、已用完或已过期),请先购买课时');
       }
 
       pkg.remainingLessons -= 1;
@@ -202,39 +202,57 @@ export class BookingsService {
   }
 
   private assertPackageUsable(pkg: CoursePackage, courseId: number, now: Date) {
+    if (!pkg.courseId) {
+      throw new BadRequestException('该课时包未绑定课种(通用包),不可用于预约,请联系前台换绑课种');
+    }
+    if (pkg.courseId !== courseId) {
+      throw new BadRequestException('课时包课种与该课次不一致,不同课种费用不同,不可跨课种抵扣');
+    }
     if (pkg.status !== 'active') throw new BadRequestException('课时包不可用(已用完/过期/退款)');
-    if (pkg.remainingLessons <= 0) throw new BadRequestException('课时包剩余课时不足');
-    if (pkg.courseId && pkg.courseId !== courseId) throw new BadRequestException('课时包科目与课程不匹配');
+    if (pkg.remainingLessons <= 0) throw new BadRequestException('该课种剩余课时不足,请先续费');
     if (pkg.validUntil && dayjs(pkg.validUntil).endOf('day').isBefore(dayjs(now))) {
-      throw new BadRequestException('课时包已过期');
+      throw new BadRequestException('该课种课时包已过期,请先续费');
     }
   }
 
-  /** 自动挑包:优先科目专属包,其次通用包;同类中先到期的先用 */
+  /**
+   * 自动挑包:严格限定与课次同课种的课时包(通用包不参与),先到期的先用。
+   * 挑不到时按原因抛出明确错误:未购买该课种 / 剩余课时不足 / 已过期。
+   */
   private async pickPackage(
     em: EntityManager,
     studentId: number,
     courseId: number,
     now: Date,
-  ): Promise<CoursePackage | null> {
-    const candidates = await em.find(CoursePackage, {
-      where: { studentId, status: 'active' },
+  ): Promise<CoursePackage> {
+    const sameCourse = await em.find(CoursePackage, {
+      where: { studentId, courseId },
       lock: { mode: 'pessimistic_write' },
     });
-    const usable = candidates.filter((p) => {
+    if (sameCourse.length === 0) {
+      throw new BadRequestException('未购买该课种课时,无法预约');
+    }
+    const usable = sameCourse.filter((p) => {
+      if (p.status !== 'active') return false;
       if (p.remainingLessons <= 0) return false;
-      if (p.courseId && p.courseId !== courseId) return false;
       if (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(dayjs(now))) return false;
       return true;
     });
+    if (usable.length === 0) {
+      const expiredOnly = sameCourse.every(
+        (p) =>
+          p.status === 'expired' ||
+          (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(dayjs(now))),
+      );
+      throw new BadRequestException(
+        expiredOnly ? '该课种课时包已过期,请先续费' : '该课种剩余课时不足,请先续费',
+      );
+    }
     usable.sort((a, b) => {
-      const aSpecific = a.courseId ? 0 : 1;
-      const bSpecific = b.courseId ? 0 : 1;
-      if (aSpecific !== bSpecific) return aSpecific - bSpecific;
       const aExp = a.validUntil ?? '9999-12-31';
       const bExp = b.validUntil ?? '9999-12-31';
       return aExp < bExp ? -1 : aExp > bExp ? 1 : 0;
     });
-    return usable[0] ?? null;
+    return usable[0];
   }
 }

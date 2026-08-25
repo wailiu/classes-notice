@@ -251,9 +251,12 @@ async function main() {
   // ---------- 课时包 + 缴费 ----------
   const pkgRepo = dataSource.getRepository(CoursePackage);
   const paymentRepo = dataSource.getRepository(Payment);
+  // 注意:课时严格按课种消耗,已取消"通用课时包",每个包必须绑定课种。
+  // 演示口径:mock-parent-1(张爸爸)的孩子张小明只买了素描、张小圆只买了创意美术,
+  // 小程序课表里钢琴/拉丁舞等未购课种应显示"未购买该课种"且不可预约。
   const pkgDefs: Array<{
     student: Student;
-    course: string | null;
+    course: string;
     name: string;
     total: number;
     remaining: number;
@@ -262,7 +265,6 @@ async function main() {
     method: Payment['method'];
   }> = [
     { student: students[0], course: '素描', name: '素描 48 课时包', total: 48, remaining: 36, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 5280, method: 'wechat' },
-    { student: students[0], course: null, name: '通用 20 课时体验包', total: 20, remaining: 2, validUntil: dayjs().add(6, 'month').format('YYYY-MM-DD'), amount: 1800, method: 'cash' },
     { student: students[1], course: '创意美术', name: '创意美术 24 课时包', total: 24, remaining: 20, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 2160, method: 'alipay' },
     { student: students[2], course: '钢琴', name: '钢琴 48 课时包', total: 48, remaining: 40, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 8640, method: 'wechat' },
     { student: students[3], course: '书法', name: '书法 24 课时包', total: 24, remaining: 3, validUntil: dayjs().add(3, 'month').format('YYYY-MM-DD'), amount: 2400, method: 'card' },
@@ -273,7 +275,7 @@ async function main() {
     const pkg = await pkgRepo.save(
       pkgRepo.create({
         studentId: def.student.id,
-        courseId: def.course ? courseByName.get(def.course)!.id : null,
+        courseId: courseByName.get(def.course)!.id,
         name: def.name,
         totalLessons: def.total,
         remainingLessons: def.remaining,
@@ -307,11 +309,9 @@ async function main() {
   const artLesson = findNextLesson(classes[1].id);
   const pianoLesson = findNextLesson(classes[4].id);
   const pkgs = await pkgRepo.find();
-  const pkgOf = (studentId: number, courseName: string | null) =>
+  const pkgOf = (studentId: number, courseName: string) =>
     pkgs.find(
-      (p) =>
-        p.studentId === studentId &&
-        (courseName ? p.courseId === courseByName.get(courseName)?.id : p.courseId === null),
+      (p) => p.studentId === studentId && p.courseId === courseByName.get(courseName)?.id,
     );
 
   const seedBookings: Booking[] = [];

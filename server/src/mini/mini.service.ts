@@ -49,7 +49,7 @@ export class MiniService {
         packages: packages.map((p) => ({
           id: p.id,
           name: p.name,
-          courseName: p.course?.name ?? '通用',
+          courseName: p.course?.name ?? '未绑定课种(不可预约)',
           remainingLessons: p.remainingLessons,
           totalLessons: p.totalLessons,
           validUntil: p.validUntil,
@@ -64,7 +64,11 @@ export class MiniService {
     if (!link) throw new ForbiddenException('该孩子不在您的名下');
   }
 
-  /** 可预约课次列表(未来 N 天,含剩余名额与本学员是否已约) */
+  /**
+   * 可预约课次列表(未来 N 天)。
+   * 课表仍展示学校全部课种(让家长了解都有哪些课),但每个课次都带 canBook + reason:
+   * 课时严格按课种消耗,未购买该课种/该课种课时不足的课次前端应禁用预约。
+   */
   async availableLessons(parentId: number, studentId: number, days = 14) {
     await this.assertChildBelongsToParent(parentId, studentId);
     const from = dayjs().format('YYYY-MM-DD');
@@ -90,8 +94,46 @@ export class MiniService {
     });
     const bookedLessonIds = new Set(myBookings.map((b) => b.lessonId));
 
+    // 该学员名下全部课时包(含已用完/过期),用于区分"未购买该课种"和"该课种课时不足"
+    const allPackages = await this.pkgRepo.find({ where: { studentId } });
+    const now = dayjs();
+    const purchasedCourseIds = new Set(
+      allPackages.filter((p) => p.courseId).map((p) => p.courseId as number),
+    );
+    const usableRemainingByCourse = new Map<number, number>();
+    for (const p of allPackages) {
+      if (!p.courseId) continue; // 未绑定课种的通用包不可用于预约
+      if (p.status !== 'active') continue;
+      if (p.remainingLessons <= 0) continue;
+      if (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(now)) continue;
+      usableRemainingByCourse.set(
+        p.courseId,
+        (usableRemainingByCourse.get(p.courseId) ?? 0) + p.remainingLessons,
+      );
+    }
+
     return lessons.map((lesson) => {
       const bookedCount = (lesson as Lesson & { bookedCount?: number }).bookedCount ?? 0;
+      const remainingSeats = Math.max(0, lesson.classEntity.capacity - bookedCount);
+      const alreadyBooked = bookedLessonIds.has(lesson.id);
+      const courseId = lesson.classEntity.courseId;
+      const courseRemaining = usableRemainingByCourse.get(courseId) ?? 0;
+
+      let canBook = false;
+      let reason = '';
+      if (alreadyBooked) {
+        reason = '已预约';
+      } else if (remainingSeats <= 0) {
+        reason = '名额已满';
+      } else if (!purchasedCourseIds.has(courseId)) {
+        reason = '未购买该课种';
+      } else if (courseRemaining <= 0) {
+        reason = '该课种课时不足';
+      } else {
+        canBook = true;
+        reason = '可预约';
+      }
+
       return {
         id: lesson.id,
         date: dayjs(lesson.date).format('YYYY-MM-DD'),
@@ -103,8 +145,11 @@ export class MiniService {
         room: lesson.classEntity.room,
         capacity: lesson.classEntity.capacity,
         bookedCount,
-        remainingSeats: Math.max(0, lesson.classEntity.capacity - bookedCount),
-        alreadyBooked: bookedLessonIds.has(lesson.id),
+        remainingSeats,
+        alreadyBooked,
+        courseRemaining,
+        canBook,
+        reason,
       };
     });
   }

@@ -1,6 +1,6 @@
 <view class="page">
   <view wx:if="{{loading}}" class="empty">加载中…</view>
-  <view wx:elif="{{!grouped.length}}" class="empty">未来两周暂无可预约课次</view>
+  <view wx:elif="{{!grouped.length}}" class="empty">未来两周暂无课次安排</view>
 
   <view wx:for="{{grouped}}" wx:key="date" wx:for-item="day" class="day-block">
     <view class="day-title">{{day.date}} {{day.weekday}}</view>
@@ -9,6 +9,7 @@
         <view class="course">{{lesson.courseName}} · {{lesson.className}}</view>
         <text wx:if="{{lesson.alreadyBooked}}" class="tag tag-green">已预约</text>
         <text wx:elif="{{lesson.remainingSeats <= 0}}" class="tag tag-red">已满</text>
+        <text wx:elif="{{!lesson.canBook}}" class="tag tag-gray">{{lesson.reason}}</text>
         <text wx:else class="tag tag-blue">余位 {{lesson.remainingSeats}}</text>
       </view>
       <view class="row2">
@@ -16,14 +17,17 @@
         <text>📍 {{lesson.room}}</text>
         <text>👩‍🏫 {{lesson.teacherName}}</text>
       </view>
+      <view wx:if="{{!lesson.canBook && !lesson.alreadyBooked && lesson.remainingSeats > 0}}" class="no-book-tip">
+        {{lesson.reason === '未购买该课种' ? '未购买该课种课时,请联系前台报名后再预约' : '该课种剩余课时不足,请先续费'}}
+      </view>
       <button
         class="btn-primary book-btn"
         size="mini"
-        disabled="{{lesson.alreadyBooked || lesson.remainingSeats <= 0 || booking}}"
+        disabled="{{!lesson.canBook || booking}}"
         data-id="{{lesson.id}}"
         bindtap="book"
       >
-        {{lesson.alreadyBooked ? '已预约' : (lesson.remainingSeats <= 0 ? '名额已满' : '预约')}}
+        {{lesson.canBook ? '预约' : lesson.reason}}
       </button>
     </view>
   </view>

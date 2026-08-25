@@ -8,7 +8,7 @@ import { Booking, CoursePackage, Lesson, Student } from '../entities';
  * - 课时扣减 / 取消退回
  * - 容量已满拦截
  * - 时间冲突拦截
- * - 无可用课时包拦截
+ * - 课时严格按课种消耗:未购课种不可约、跨课种不可抵扣、通用包不可用
  * - 开课前 N 小时取消限制
  */
 describe('BookingsService 预约核心规则', () => {
@@ -50,7 +50,11 @@ describe('BookingsService 预约核心规则', () => {
     find: jest.fn(async (entity: any, opts: any) => {
       if (entity === CoursePackage) {
         const w = opts?.where ?? {};
-        return packages.filter((p) => p.studentId === w.studentId && p.status === 'active');
+        return packages.filter(
+          (p) =>
+            p.studentId === w.studentId &&
+            (w.courseId === undefined || p.courseId === w.courseId),
+        );
       }
       return [];
     }),
@@ -91,6 +95,7 @@ describe('BookingsService 预约核心规则', () => {
   });
 
   beforeEach(() => {
+    // 课种 10 = 素描,课种 20 = 钢琴,课种 99 = 其他课种
     const classA = { id: 1, capacity: 2, courseId: 10 };
     lessons = [
       {
@@ -111,16 +116,35 @@ describe('BookingsService 预约核心规则', () => {
         status: 'scheduled',
         classEntity: { id: 2, capacity: 5, courseId: 10 },
       },
+      // 钢琴课次(课种 20)
+      {
+        id: 102,
+        classId: 3,
+        date: '2026-08-27',
+        startTime: '15:00',
+        endTime: '16:00',
+        status: 'scheduled',
+        classEntity: { id: 3, capacity: 5, courseId: 20 },
+      },
     ];
     students = [
       { id: 1, name: '张小明', status: 'active' },
       { id: 2, name: '李小红', status: 'active' },
       { id: 3, name: '王小刚', status: 'active' },
+      { id: 4, name: '赵通用', status: 'active' },
+      { id: 5, name: '钱用完', status: 'active' },
+      { id: 6, name: '孙过期', status: 'active' },
     ];
     packages = [
       { id: 500, studentId: 1, courseId: 10, remainingLessons: 5, status: 'active', validUntil: null },
       { id: 501, studentId: 2, courseId: 10, remainingLessons: 1, status: 'active', validUntil: null },
       { id: 502, studentId: 3, courseId: 99, remainingLessons: 8, status: 'active', validUntil: null },
+      // 历史遗留"通用包"(未绑定课种):按新规则不可用于任何预约
+      { id: 503, studentId: 4, courseId: null, remainingLessons: 10, status: 'active', validUntil: null },
+      // 课种 10 的包但剩余 0(状态 finished)
+      { id: 504, studentId: 5, courseId: 10, remainingLessons: 0, status: 'finished', validUntil: null },
+      // 课种 10 的包但已过期
+      { id: 505, studentId: 6, courseId: 10, remainingLessons: 6, status: 'active', validUntil: '2026-01-01' },
     ];
     bookings = [];
 
@@ -162,8 +186,53 @@ describe('BookingsService 预约核心规则', () => {
     await expect(service.book({ studentId: 1, lessonId: 101, now: NOW })).rejects.toThrow('时间冲突');
   });
 
-  it('科目不匹配、无可用课时包时被拒绝', async () => {
-    await expect(service.book({ studentId: 3, lessonId: 100, now: NOW })).rejects.toThrow('没有可用课时包');
+  it('买了课种 A(素描)不能预约课种 B(钢琴):未购买该课种被拒绝', async () => {
+    // 学员 1 只有课种 10(素描)的包,预约课种 20(钢琴)课次
+    await expect(service.book({ studentId: 1, lessonId: 102, now: NOW })).rejects.toThrow(
+      '未购买该课种课时,无法预约',
+    );
+    // 素描包课时不受影响
+    expect(packages.find((p) => p.id === 500)!.remainingLessons).toBe(5);
+  });
+
+  it('课种匹配但学员只买过其他课种,同样被拒绝', async () => {
+    // 学员 3 只有课种 99 的包,预约课种 10 的课次
+    await expect(service.book({ studentId: 3, lessonId: 100, now: NOW })).rejects.toThrow(
+      '未购买该课种课时,无法预约',
+    );
+  });
+
+  it('通用包(未绑定课种)不可用于预约:自动挑包挑不到', async () => {
+    // 学员 4 只有 courseId=null 的历史通用包,剩余 10 课时也不能约
+    await expect(service.book({ studentId: 4, lessonId: 100, now: NOW })).rejects.toThrow(
+      '未购买该课种课时,无法预约',
+    );
+    expect(packages.find((p) => p.id === 503)!.remainingLessons).toBe(10);
+  });
+
+  it('通用包(未绑定课种)不可用于预约:显式指定 packageId 也被拒绝', async () => {
+    await expect(
+      service.book({ studentId: 4, lessonId: 100, packageId: 503, now: NOW }),
+    ).rejects.toThrow('未绑定课种');
+  });
+
+  it('显式指定跨课种的课时包被拒绝', async () => {
+    // 学员 3 拿课种 99 的包(502)去约课种 10 的课次
+    await expect(
+      service.book({ studentId: 3, lessonId: 100, packageId: 502, now: NOW }),
+    ).rejects.toThrow('不可跨课种抵扣');
+  });
+
+  it('该课种的包剩余课时为 0 时,提示课时不足', async () => {
+    await expect(service.book({ studentId: 5, lessonId: 100, now: NOW })).rejects.toThrow(
+      '该课种剩余课时不足',
+    );
+  });
+
+  it('该课种的包已过期时,提示已过期', async () => {
+    await expect(service.book({ studentId: 6, lessonId: 100, now: NOW })).rejects.toThrow(
+      '该课种课时包已过期',
+    );
   });
 
   it('取消预约后课时退回', async () => {
