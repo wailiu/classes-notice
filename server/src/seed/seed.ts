@@ -198,8 +198,12 @@ async function main() {
     endTime: string;
     capacity: number;
   }> = [
-    { name: '素描少儿A班', course: '素描', teacher: teachers[0], room: '101 画室', weekday: 6, startTime: '10:00', endTime: '11:30', capacity: 8 },
-    { name: '创意美术启蒙班', course: '创意美术', teacher: teachers[0], room: '102 画室', weekday: 7, startTime: '09:30', endTime: '10:30', capacity: 10 },
+    // 素描按用户实际课表:每周六、日 上/下午各一节,一个班 = 一个可预约时段
+    { name: '素描·周六上午班', course: '素描', teacher: teachers[0], room: '101 画室', weekday: 6, startTime: '10:00', endTime: '11:30', capacity: 8 },
+    { name: '素描·周六下午班', course: '素描', teacher: teachers[0], room: '101 画室', weekday: 6, startTime: '14:00', endTime: '15:30', capacity: 8 },
+    { name: '素描·周日上午班', course: '素描', teacher: teachers[0], room: '101 画室', weekday: 7, startTime: '10:00', endTime: '11:30', capacity: 8 },
+    { name: '素描·周日下午班', course: '素描', teacher: teachers[0], room: '101 画室', weekday: 7, startTime: '14:00', endTime: '15:30', capacity: 8 },
+    { name: '创意美术启蒙班', course: '创意美术', teacher: teachers[0], room: '102 画室', weekday: 7, startTime: '16:00', endTime: '17:00', capacity: 10 },
     { name: '书法硬笔班', course: '书法', teacher: teachers[1], room: '201 书法室', weekday: 3, startTime: '18:30', endTime: '19:30', capacity: 12 },
     { name: '声乐启蒙班', course: '声乐', teacher: teachers[2], room: '301 琴房', weekday: 6, startTime: '14:00', endTime: '15:00', capacity: 6 },
     { name: '钢琴考级小组班', course: '钢琴', teacher: teachers[2], room: '302 琴房', weekday: 7, startTime: '15:00', endTime: '16:00', capacity: 4 },
@@ -224,11 +228,11 @@ async function main() {
   );
   console.log(`班级 ${classes.length} 个`);
 
-  // ---------- 生成未来 4 周课次 ----------
+  // ---------- 生成未来 5 周课次(保证"长期预约一个月"能约到足够多节) ----------
   const lessonRepo = dataSource.getRepository(Lesson);
   const lessons: Lesson[] = [];
   const start = dayjs();
-  const end = dayjs().add(28, 'day');
+  const end = dayjs().add(35, 'day');
   for (const cls of classes) {
     for (let d = start; !d.isAfter(end); d = d.add(1, 'day')) {
       const isoWeekday = d.day() === 0 ? 7 : d.day();
@@ -246,14 +250,17 @@ async function main() {
     }
   }
   const savedLessons = await lessonRepo.save(lessons);
-  console.log(`课次 ${savedLessons.length} 节(未来 4 周)`);
+  console.log(`课次 ${savedLessons.length} 节(未来 5 周)`);
 
   // ---------- 课时包 + 缴费 ----------
   const pkgRepo = dataSource.getRepository(CoursePackage);
   const paymentRepo = dataSource.getRepository(Payment);
+  // 注意:课时严格按课种消耗,已取消"通用课时包",每个包必须绑定课种。
+  // 演示口径:mock-parent-1(张爸爸)的孩子张小明只买了素描、张小圆只买了创意美术,
+  // 小程序课表里钢琴/拉丁舞等未购课种应显示"未购买该课种"且不可预约。
   const pkgDefs: Array<{
     student: Student;
-    course: string | null;
+    course: string;
     name: string;
     total: number;
     remaining: number;
@@ -262,7 +269,6 @@ async function main() {
     method: Payment['method'];
   }> = [
     { student: students[0], course: '素描', name: '素描 48 课时包', total: 48, remaining: 36, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 5280, method: 'wechat' },
-    { student: students[0], course: null, name: '通用 20 课时体验包', total: 20, remaining: 2, validUntil: dayjs().add(6, 'month').format('YYYY-MM-DD'), amount: 1800, method: 'cash' },
     { student: students[1], course: '创意美术', name: '创意美术 24 课时包', total: 24, remaining: 20, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 2160, method: 'alipay' },
     { student: students[2], course: '钢琴', name: '钢琴 48 课时包', total: 48, remaining: 40, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 8640, method: 'wechat' },
     { student: students[3], course: '书法', name: '书法 24 课时包', total: 24, remaining: 3, validUntil: dayjs().add(3, 'month').format('YYYY-MM-DD'), amount: 2400, method: 'card' },
@@ -273,7 +279,7 @@ async function main() {
     const pkg = await pkgRepo.save(
       pkgRepo.create({
         studentId: def.student.id,
-        courseId: def.course ? courseByName.get(def.course)!.id : null,
+        courseId: courseByName.get(def.course)!.id,
         name: def.name,
         totalLessons: def.total,
         remainingLessons: def.remaining,
@@ -299,19 +305,21 @@ async function main() {
 
   // ---------- 预约示例:给最近的素描课/创意美术课各来几条 ----------
   const bookingRepo = dataSource.getRepository(Booking);
-  const findNextLesson = (classId: number) =>
-    savedLessons
-      .filter((l) => l.classId === classId)
+  const classByName = new Map(classes.map((c) => [c.name, c]));
+  const findNextLesson = (className: string) => {
+    const cls = classByName.get(className);
+    if (!cls) return undefined;
+    return savedLessons
+      .filter((l) => l.classId === cls.id)
       .sort((a, b) => (a.date < b.date ? -1 : 1))[0];
-  const sketchLesson = findNextLesson(classes[0].id);
-  const artLesson = findNextLesson(classes[1].id);
-  const pianoLesson = findNextLesson(classes[4].id);
+  };
+  const sketchLesson = findNextLesson('素描·周六上午班');
+  const artLesson = findNextLesson('创意美术启蒙班');
+  const pianoLesson = findNextLesson('钢琴考级小组班');
   const pkgs = await pkgRepo.find();
-  const pkgOf = (studentId: number, courseName: string | null) =>
+  const pkgOf = (studentId: number, courseName: string) =>
     pkgs.find(
-      (p) =>
-        p.studentId === studentId &&
-        (courseName ? p.courseId === courseByName.get(courseName)?.id : p.courseId === null),
+      (p) => p.studentId === studentId && p.courseId === courseByName.get(courseName)?.id,
     );
 
   const seedBookings: Booking[] = [];

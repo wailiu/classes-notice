@@ -19,8 +19,13 @@
       <el-table-column label="ID" prop="id" width="60" />
       <el-table-column label="学员" prop="student.name" width="100" />
       <el-table-column label="课时包" prop="name" min-width="150" />
-      <el-table-column label="科目" width="100">
-        <template #default="{ row }">{{ row.course?.name || '通用' }}</template>
+      <el-table-column label="课种" width="110">
+        <template #default="{ row }">
+          <span v-if="row.course">{{ row.course.name }}</span>
+          <el-tooltip v-else content="历史通用包未绑定课种,已不可用于预约,请编辑处理">
+            <el-tag size="small" type="danger">未绑定(不可约)</el-tag>
+          </el-tooltip>
+        </template>
       </el-table-column>
       <el-table-column label="剩余/总数" width="110">
         <template #default="{ row }">
@@ -68,8 +73,8 @@
             <el-option v-for="s in students" :key="s.id" :label="s.name" :value="s.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="限定科目">
-          <el-select v-model="form.courseId" clearable placeholder="不选=通用课时包" style="width: 100%">
+        <el-form-item label="课种" required>
+          <el-select v-model="form.courseId" placeholder="必选:课时按课种消耗,不可跨课种使用" style="width: 100%">
             <el-option v-for="c in courses" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </el-form-item>
@@ -212,11 +217,15 @@ async function onSave() {
     ElMessage.warning('请选择学员并填写课时包名称');
     return;
   }
+  if (!form.courseId) {
+    ElMessage.warning('请选择课种:课时按课种消耗,不再支持通用课时包');
+    return;
+  }
   saving.value = true;
   try {
     await createPackage({
       studentId: form.studentId,
-      courseId: form.courseId || undefined,
+      courseId: form.courseId,
       name: form.name,
       totalLessons: form.totalLessons,
       validUntil: form.validUntil || undefined,

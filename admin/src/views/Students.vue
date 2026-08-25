@@ -120,8 +120,8 @@
         <h4>课时包</h4>
         <el-table :data="detail.packages" size="small">
           <el-table-column label="名称" prop="name" />
-          <el-table-column label="科目" width="90">
-            <template #default="{ row }">{{ row.course?.name || '通用' }}</template>
+          <el-table-column label="课种" width="110">
+            <template #default="{ row }">{{ row.course?.name || '未绑定(不可约)' }}</template>
           </el-table-column>
           <el-table-column label="剩余/总数" width="90">
             <template #default="{ row }">{{ row.remainingLessons }}/{{ row.totalLessons }}</template>

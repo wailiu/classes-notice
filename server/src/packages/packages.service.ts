@@ -6,7 +6,8 @@ import { CoursePackage, Student, Course, Payment, Booking } from '../entities';
 
 export interface PackageCreate {
   studentId: number;
-  courseId?: number | null;
+  /** 必填:课时按课种消耗,不再支持不绑定课种的"通用包" */
+  courseId: number;
   name: string;
   totalLessons: number;
   validUntil?: string | null;
@@ -51,10 +52,11 @@ export class PackagesService {
   async create(data: PackageCreate) {
     const student = await this.studentRepo.findOne({ where: { id: data.studentId } });
     if (!student) throw new BadRequestException('学员不存在');
-    if (data.courseId) {
-      const course = await this.courseRepo.findOne({ where: { id: data.courseId } });
-      if (!course) throw new BadRequestException('科目不存在');
+    if (!data.courseId) {
+      throw new BadRequestException('请选择课时包绑定的课种(不同课种费用不同,不再支持通用课时包)');
     }
+    const course = await this.courseRepo.findOne({ where: { id: data.courseId } });
+    if (!course) throw new BadRequestException('课种不存在');
     if (data.validUntil && !dayjs(data.validUntil).isValid()) {
       throw new BadRequestException('有效期日期不合法');
     }
@@ -63,7 +65,7 @@ export class PackagesService {
       const pkg = await em.save(
         em.create(CoursePackage, {
           studentId: data.studentId,
-          courseId: data.courseId || null,
+          courseId: data.courseId,
           name: data.name,
           totalLessons: data.totalLessons,
           remainingLessons: data.totalLessons,

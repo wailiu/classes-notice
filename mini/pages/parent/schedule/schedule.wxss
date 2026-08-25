@@ -1,16 +1,15 @@
-.day-block {
-  margin-bottom: 8rpx;
-}
-
-.day-title {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #666;
+.tip {
   margin: 20rpx 24rpx 0;
+  font-size: 24rpx;
+  color: #909399;
 }
 
-.lesson {
-  position: relative;
+.course-card {
+  transition: opacity 0.2s;
+}
+
+.course-card.disabled {
+  opacity: 0.62;
 }
 
 .row1 {
@@ -19,21 +18,44 @@
   justify-content: space-between;
 }
 
-.course {
-  font-size: 30rpx;
+.course-name {
+  font-size: 32rpx;
   font-weight: 600;
 }
 
-.row2 {
+.slots {
   display: flex;
-  gap: 24rpx;
-  color: #909399;
-  font-size: 24rpx;
-  margin-top: 12rpx;
   flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
 }
 
-.book-btn {
+.slot-chip {
+  font-size: 22rpx;
+  color: #4f7cff;
+  background: #eef3ff;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.slot-chip.none {
+  color: #b0b3bb;
+  background: #f0f1f5;
+}
+
+.row3 {
   margin-top: 16rpx;
-  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.go {
+  font-size: 26rpx;
+  color: #4f7cff;
+  font-weight: 500;
+}
+
+.no-book {
+  font-size: 24rpx;
+  color: #e6a23c;
 }

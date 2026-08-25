@@ -43,9 +43,9 @@ class PackageCreateDto {
   @IsInt()
   studentId: number;
 
-  @IsOptional()
-  @IsInt()
-  courseId?: number;
+  /** 课时按课种消耗,新建课时包必须绑定课种(不再支持通用包) */
+  @IsInt({ message: '请选择课时包绑定的课种' })
+  courseId: number;
 
   @IsString()
   @IsNotEmpty({ message: '课时包名称不能为空' })

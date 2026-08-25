@@ -1,0 +1,291 @@
+.has-bar {
+  padding-bottom: 140rpx;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.head-course {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+/* ---------- 时段选择 ---------- */
+.slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.slot-item {
+  flex: 1 1 42%;
+  border: 2rpx solid #e4e7ed;
+  border-radius: 12rpx;
+  padding: 16rpx;
+}
+
+.slot-item.active {
+  border-color: #4f7cff;
+  background: #eef3ff;
+}
+
+.slot-main {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.slot-item.active .slot-main {
+  color: #4f7cff;
+}
+
+.slot-sub {
+  font-size: 22rpx;
+  color: #909399;
+  margin-top: 6rpx;
+}
+
+/* ---------- 预约方式 ---------- */
+.mode-tabs {
+  display: flex;
+  background: #f0f1f5;
+  border-radius: 12rpx;
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+}
+
+.mode-tab {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  padding: 12rpx 0;
+  border-radius: 10rpx;
+  color: #666;
+}
+
+.mode-tab.active {
+  background: #fff;
+  color: #4f7cff;
+  font-weight: 600;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.list-tip {
+  font-size: 24rpx;
+  color: #909399;
+}
+
+.select-all {
+  font-size: 24rpx;
+  color: #4f7cff;
+}
+
+/* ---------- 课次勾选 ---------- */
+.lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 18rpx 8rpx;
+  border-bottom: 1rpx solid #f0f1f5;
+}
+
+.lesson-row.disabled {
+  opacity: 0.55;
+}
+
+.lesson-row.checked {
+  background: #f6f9ff;
+}
+
+.checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid #c0c4cc;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.checkbox.on {
+  background: #4f7cff;
+  border-color: #4f7cff;
+}
+
+.lesson-info {
+  flex: 1;
+}
+
+.lesson-date {
+  font-size: 28rpx;
+}
+
+.lesson-time {
+  font-size: 22rpx;
+  color: #909399;
+  margin-top: 4rpx;
+}
+
+/* ---------- 长期预约 ---------- */
+.range-opts {
+  display: flex;
+  gap: 16rpx;
+  margin: 16rpx 0;
+}
+
+.range-opt {
+  flex: 1;
+  text-align: center;
+  border: 2rpx solid #e4e7ed;
+  border-radius: 12rpx;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+}
+
+.range-opt.active {
+  border-color: #4f7cff;
+  background: #eef3ff;
+  color: #4f7cff;
+  font-weight: 600;
+}
+
+.preview {
+  background: #f8f9fc;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.preview-line {
+  font-size: 26rpx;
+}
+
+.hl {
+  color: #4f7cff;
+  font-weight: 600;
+}
+
+.preview-warn {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #f0442c;
+}
+
+.preview-blocked {
+  margin-top: 12rpx;
+}
+
+.blocked-title {
+  font-size: 24rpx;
+  color: #e6a23c;
+}
+
+.blocked-item {
+  font-size: 22rpx;
+  color: #909399;
+  margin-top: 6rpx;
+}
+
+/* ---------- 底部提交栏 ---------- */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.bar-info {
+  flex: 1;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.bar-btn {
+  width: 260rpx;
+  margin: 0;
+}
+
+/* ---------- 结果面板 ---------- */
+.result-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+
+.result-panel {
+  width: 620rpx;
+  max-height: 75vh;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.result-summary {
+  font-size: 26rpx;
+  text-align: center;
+  color: #666;
+  margin: 16rpx 0;
+}
+
+.result-list {
+  flex: 1;
+  max-height: 40vh;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 24rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f0f1f5;
+}
+
+.ok-text {
+  color: #23b26d;
+}
+
+.fail-text {
+  color: #f0442c;
+  max-width: 260rpx;
+  text-align: right;
+}
+
+.result-btn {
+  margin-top: 24rpx;
+}

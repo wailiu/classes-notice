@@ -1,0 +1,147 @@
+<view class="page has-bar">
+  <view wx:if="{{loading}}" class="empty">加载中…</view>
+  <view wx:elif="{{!slots.length}}" class="empty">该课种未来暂无排课</view>
+
+  <block wx:if="{{!loading && slots.length}}">
+    <!-- 课种概览 -->
+    <view class="card head">
+      <view class="head-course">{{courseName}}</view>
+      <text class="tag {{remaining <= 3 ? 'tag-red' : 'tag-green'}}">剩 {{remaining}} 课时</text>
+    </view>
+
+    <!-- 第一步:选时段 -->
+    <view class="card">
+      <view class="section-title">1. 选择上课时段</view>
+      <view class="slot-list">
+        <view
+          wx:for="{{slots}}"
+          wx:key="classId"
+          wx:for-item="slot"
+          class="slot-item {{index === slotIndex ? 'active' : ''}}"
+          data-index="{{index}}"
+          bindtap="selectSlot"
+        >
+          <view class="slot-main">{{slot.weekdayText}}{{slot.period}} {{slot.startTime}}-{{slot.endTime}}</view>
+          <view class="slot-sub">{{slot.teacherName}} · {{slot.room}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 第二步:预约方式 -->
+    <view class="card">
+      <view class="section-title">2. 选择预约方式</view>
+      <view class="mode-tabs">
+        <view class="mode-tab {{mode === 'single' ? 'active' : ''}}" data-mode="single" bindtap="switchMode">单次预约</view>
+        <view class="mode-tab {{mode === 'longterm' ? 'active' : ''}}" data-mode="longterm" bindtap="switchMode">长期预约</view>
+      </view>
+
+      <!-- 单次:勾选课次(可多选) -->
+      <block wx:if="{{mode === 'single'}}">
+        <view class="list-head">
+          <text class="list-tip">勾选要预约的课次(可多选)</text>
+          <text class="select-all" bindtap="selectAllBookable">全选可约</text>
+        </view>
+        <view wx:if="{{!lessons.length}}" class="empty small">该时段未来暂无课次</view>
+        <view
+          wx:for="{{lessons}}"
+          wx:key="id"
+          wx:for-item="lesson"
+          class="lesson-row {{lesson.checked ? 'checked' : ''}} {{lesson.canBook ? '' : 'disabled'}}"
+          data-id="{{lesson.id}}"
+          bindtap="toggleLesson"
+        >
+          <view class="checkbox {{lesson.checked ? 'on' : ''}}">{{lesson.checked ? '✓' : ''}}</view>
+          <view class="lesson-info">
+            <view class="lesson-date">{{lesson.date}} {{lesson.weekdayText}}</view>
+            <view class="lesson-time">{{lesson.startTime}}-{{lesson.endTime}}</view>
+          </view>
+          <text wx:if="{{lesson.canBook}}" class="tag tag-blue">余位 {{lesson.remainingSeats}}</text>
+          <text wx:elif="{{lesson.alreadyBooked}}" class="tag tag-green">已预约</text>
+          <text wx:else class="tag tag-gray">{{lesson.reason}}</text>
+        </view>
+      </block>
+
+      <!-- 长期:选范围一键预约 -->
+      <block wx:else>
+        <view class="list-tip">一次预约该时段在所选范围内的全部课次</view>
+        <view class="range-opts">
+          <view
+            wx:for="{{rangeOptions}}"
+            wx:key="days"
+            wx:for-item="opt"
+            class="range-opt {{rangeDays === opt.days ? 'active' : ''}}"
+            data-days="{{opt.days}}"
+            bindtap="setRange"
+          >
+            {{opt.label}}
+          </view>
+        </view>
+        <view class="preview">
+          <view class="preview-line">
+            范围内共 <text class="hl">{{preview.total}}</text> 节,
+            可预约 <text class="hl">{{preview.bookable}}</text> 节,
+            将扣 <text class="hl">{{preview.bookable}}</text> 课时
+          </view>
+          <view wx:if="{{preview.bookable > remaining}}" class="preview-warn">
+            剩余课时不足(仅剩 {{remaining}}),请缩短范围或联系前台续费
+          </view>
+          <view wx:if="{{preview.blocked.length}}" class="preview-blocked">
+            <view class="blocked-title">以下 {{preview.blocked.length}} 节不可约,将自动跳过:</view>
+            <view wx:for="{{preview.blocked}}" wx:key="date" wx:for-item="b" class="blocked-item">
+              {{b.date}} {{b.weekdayText}} · {{b.reason}}
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </block>
+
+  <!-- 底部提交栏 -->
+  <view class="bottom-bar" wx:if="{{!loading && slots.length && !result}}">
+    <view class="bar-info">
+      <block wx:if="{{mode === 'single'}}">已选 {{selectedCount}} 节 · 扣 {{selectedCount}} 课时 · 剩 {{remaining}}</block>
+      <block wx:else>将约 {{preview.bookable}} 节 · 扣 {{preview.bookable}} 课时 · 剩 {{remaining}}</block>
+    </view>
+    <button
+      wx:if="{{mode === 'single'}}"
+      class="btn-primary bar-btn"
+      disabled="{{submitting || !selectedCount || selectedCount > remaining}}"
+      bindtap="submitSingle"
+    >
+      {{submitting ? '提交中…' : '确认预约'}}
+    </button>
+    <button
+      wx:else
+      class="btn-primary bar-btn"
+      disabled="{{submitting || !preview.bookable || preview.bookable > remaining}}"
+      bindtap="submitLongterm"
+    >
+      {{submitting ? '提交中…' : '一键长期预约'}}
+    </button>
+  </view>
+
+  <!-- 提交结果 -->
+  <view class="result-mask" wx:if="{{result}}" bindtap="noop">
+    <view class="result-panel">
+      <view class="result-title">
+        {{result.booked.length ? '预约完成' : '未能预约'}}
+      </view>
+      <view class="result-summary">
+        成功 <text class="hl">{{result.booked.length}}</text> 节,
+        扣除 <text class="hl">{{result.deducted}}</text> 课时,
+        剩余 <text class="hl">{{result.remainingAfter}}</text> 课时
+      </view>
+      <scroll-view scroll-y class="result-list">
+        <view wx:for="{{result.booked}}" wx:key="lessonId" wx:for-item="b" class="result-row ok">
+          <text>✅ {{b.date}} {{b.startTime}}-{{b.endTime}}</text>
+          <text class="ok-text">预约成功</text>
+        </view>
+        <view wx:for="{{result.failed}}" wx:key="lessonId" wx:for-item="f" class="result-row fail">
+          <text>❌ {{f.date || '未知课次'}} {{f.startTime || ''}}</text>
+          <text class="fail-text">{{f.reason}}</text>
+        </view>
+      </scroll-view>
+      <button class="btn-primary result-btn" bindtap="closeResult">知道了</button>
+    </view>
+  </view>
+</view>
