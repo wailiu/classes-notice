@@ -1,7 +1,7 @@
 {
   "description": "艺术培训学校 - 家长/老师小程序",
   "projectname": "art-school-mini",
-  "appid": "touristappid",
+  "appid": "wxc0647c0df4fb73d2",
   "compileType": "miniprogram",
   "miniprogramRoot": "./",
   "setting": {
@@ -11,7 +11,25 @@
     "postcss": true,
     "minified": true,
     "ignoreDevUnusedFiles": false,
-    "ignoreUploadUnusedFiles": false
+    "ignoreUploadUnusedFiles": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "libVersion": "3.5.0",
   "srcMiniprogramRoot": "./",
@@ -22,5 +40,6 @@
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
-  }
+  },
+  "simulatorPluginLibVersion": {}
 }
