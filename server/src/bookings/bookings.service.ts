@@ -75,6 +75,10 @@ export class BookingsService {
    * 5. 同一时间段无冲突预约
    * 6. 课时严格按课种消耗:仅可使用与该课次课种一致的课时包(剩余>0、未过期),
    *    未绑定课种的"通用包"一律不可用于预约;预约即扣 1 课时
+   *
+   * 临时到课(老师手动扣课时)复用本方法:
+   * - allowStarted:学员现场到课,允许为已开始的课次登记
+   * - checkinNow:登记即签到(checked_in),无需再点签到
    */
   async book(params: {
     studentId: number;
@@ -82,6 +86,8 @@ export class BookingsService {
     packageId?: number;
     source?: string;
     now?: Date;
+    allowStarted?: boolean;
+    checkinNow?: boolean;
   }) {
     const now = params.now ?? new Date();
     return this.dataSource.transaction(async (em) => {
@@ -92,7 +98,9 @@ export class BookingsService {
       if (!lesson) throw new NotFoundException('课次不存在');
       if (lesson.status !== 'scheduled') throw new BadRequestException('该课次不可预约(已取消或已结课)');
       const lessonStart = dayjs(`${dayjs(lesson.date).format('YYYY-MM-DD')} ${lesson.startTime}`);
-      if (!lessonStart.isAfter(dayjs(now))) throw new BadRequestException('该课次已开始,无法预约');
+      if (!params.allowStarted && !lessonStart.isAfter(dayjs(now))) {
+        throw new BadRequestException('该课次已开始,无法预约');
+      }
 
       const student = await em.findOne(Student, { where: { id: params.studentId } });
       if (!student) throw new NotFoundException('学员不存在');
@@ -151,7 +159,8 @@ export class BookingsService {
           studentId: params.studentId,
           lessonId: params.lessonId,
           packageId: pkg.id,
-          status: 'booked',
+          status: params.checkinNow ? 'checked_in' : 'booked',
+          checkinAt: params.checkinNow ? now : null,
           source: params.source ?? 'admin',
         }),
       );

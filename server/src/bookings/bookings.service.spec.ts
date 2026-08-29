@@ -261,4 +261,52 @@ describe('BookingsService 预约核心规则', () => {
       service.cancel(booking.id, { now: NOW, parentStudentIds: [2, 3] }),
     ).rejects.toThrow('无权操作');
   });
+
+  // ---------- 临时到课(老师手动扣课时) ----------
+
+  // 课次进行中的时间(100 课次 2026-08-26 10:00-11:30)
+  const DURING = new Date('2026-08-26T10:30:00');
+
+  it('课次已开始:普通预约被拒,临时到课(allowStarted)可登记', async () => {
+    await expect(service.book({ studentId: 1, lessonId: 100, now: DURING })).rejects.toThrow(
+      '该课次已开始,无法预约',
+    );
+    const booking = await service.book({
+      studentId: 1,
+      lessonId: 100,
+      source: 'teacher',
+      allowStarted: true,
+      checkinNow: true,
+      now: DURING,
+    });
+    expect(booking.status).toBe('checked_in');
+    expect(booking.source).toBe('teacher');
+    expect(booking.checkinAt).toEqual(DURING);
+    expect(packages.find((p) => p.id === 500)!.remainingLessons).toBe(4);
+  });
+
+  it('临时到课同样按课种扣课时:未购买该课种被拒绝', async () => {
+    // 学员 3 只有课种 99 的包,到素描课次现场登记
+    await expect(
+      service.book({ studentId: 3, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING }),
+    ).rejects.toThrow('未购买该课种课时,无法预约');
+    expect(packages.find((p) => p.id === 502)!.remainingLessons).toBe(8);
+  });
+
+  it('临时到课不能重复登记已在名单中的学员', async () => {
+    await service.book({ studentId: 1, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING });
+    await expect(
+      service.book({ studentId: 1, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING }),
+    ).rejects.toThrow('重复预约');
+    expect(packages.find((p) => p.id === 500)!.remainingLessons).toBe(4);
+  });
+
+  it('临时到课受容量限制:名额已满被拒绝', async () => {
+    // 100 课次容量 2
+    await service.book({ studentId: 1, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING });
+    await service.book({ studentId: 2, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING });
+    await expect(
+      service.book({ studentId: 5, lessonId: 100, source: 'teacher', allowStarted: true, checkinNow: true, now: DURING }),
+    ).rejects.toThrow('名额已满');
+  });
 });

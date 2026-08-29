@@ -8,8 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { IsArray, IsInt, IsOptional, Matches } from 'class-validator';
-import { CurrentUser, MiniGuard, MiniJwtPayload, Roles } from '../auth/guards';
+import { IsArray, IsInt, IsOptional, Matches } from 'class-validator';import { CurrentUser, MiniGuard, MiniJwtPayload, Roles } from '../auth/guards';
 import { MiniService } from './mini.service';
 
 class ParentBookDto {
@@ -42,6 +41,12 @@ class ParentBatchBookDto {
   @IsOptional()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'to 格式应为 YYYY-MM-DD' })
   to?: string;
+}
+
+/** 老师登记临时到课 */
+class TeacherWalkinDto {
+  @IsInt()
+  studentId: number;
 }
 
 @UseGuards(MiniGuard)
@@ -145,6 +150,24 @@ export class MiniController {
   @Post('teacher/bookings/:id/checkin')
   checkin(@CurrentUser() user: MiniJwtPayload, @Param('id', ParseIntPipe) id: number) {
     return this.service.teacherCheckin(user.teacherId!, id);
+  }
+
+  /** 临时到课候选学员:已购本课次课种且有可用课时的在读学员 */
+  @Roles('teacher')
+  @Get('teacher/lessons/:id/walkin-candidates')
+  walkinCandidates(@CurrentUser() user: MiniJwtPayload, @Param('id', ParseIntPipe) id: number) {
+    return this.service.teacherWalkinCandidates(user.teacherId!, id);
+  }
+
+  /** 临时到课登记:登记即签到并扣 1 课时 */
+  @Roles('teacher')
+  @Post('teacher/lessons/:id/walkin')
+  walkin(
+    @CurrentUser() user: MiniJwtPayload,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: TeacherWalkinDto,
+  ) {
+    return this.service.teacherWalkin(user.teacherId!, id, dto.studentId);
   }
 
   // ---------- 校长端 ----------

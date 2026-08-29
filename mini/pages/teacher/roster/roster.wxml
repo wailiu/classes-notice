@@ -16,7 +16,10 @@
         {{item.name}}
         <text class="gender">{{item.gender === 'male' ? '男' : (item.gender === 'female' ? '女' : '')}}</text>
       </view>
-      <text class="tag {{item.statusTag}}">{{item.statusText}}</text>
+      <view class="tags">
+        <text class="tag tag-orange" wx:if="{{item.sourceText}}">{{item.sourceText}}</text>
+        <text class="tag {{item.statusTag}}">{{item.statusText}}</text>
+      </view>
     </view>
     <view class="parents" wx:if="{{item.parents.length}}">
       <view
@@ -39,5 +42,47 @@
     >
       签到
     </button>
+  </view>
+
+  <!-- 临时到课:未预约直接来上课,手动登记并扣课时 -->
+  <view class="card">
+    <view class="walkin-head" bindtap="toggleWalkin">
+      <view class="walkin-title">临时到课 · 手动扣课时</view>
+      <view class="walkin-toggle">{{walkinOpen ? '收起 ▲' : '展开 ▼'}}</view>
+    </view>
+    <view class="walkin-tip">学员未预约直接来上课时,在此登记:当场扣 1 课时(按课种)并记为已签到</view>
+
+    <block wx:if="{{walkinOpen}}">
+      <view wx:if="{{walkinLoading}}" class="empty">加载中…</view>
+      <block wx:else>
+        <view class="walkin-seats {{remainingSeats <= 0 ? 'full' : ''}}">
+          {{remainingSeats > 0 ? '本课次剩余名额 ' + remainingSeats + ' 个' : '本课次名额已满,无法登记'}}
+        </view>
+        <view wx:if="{{!candidates.length}}" class="empty">
+          没有可登记的学员\n(需已购买「{{lesson.courseName}}」且有剩余课时)
+        </view>
+        <block wx:else>
+          <picker
+            mode="selector"
+            range="{{candidateLabels}}"
+            bindchange="onPickStudent"
+            disabled="{{remainingSeats <= 0}}"
+          >
+            <view class="walkin-select {{pickedIndex >= 0 ? 'picked' : ''}} {{remainingSeats <= 0 ? 'disabled' : ''}}">
+              {{pickedIndex >= 0 ? candidateLabels[pickedIndex] : '请选择学员'}}
+              <text class="walkin-arrow">▾</text>
+            </view>
+          </picker>
+          <button
+            class="btn-primary walkin-btn"
+            size="mini"
+            bindtap="addWalkin"
+            disabled="{{pickedIndex < 0 || remainingSeats <= 0}}"
+          >
+            加入并签到(扣 1 课时)
+          </button>
+        </block>
+      </block>
+    </block>
   </view>
 </view>

@@ -164,6 +164,8 @@ async function main() {
     studentRepo.create({ name: '周天佑', gender: 'male', birthday: '2015-11-08', status: 'active', remark: null }),
     studentRepo.create({ name: '吴悠悠', gender: 'female', birthday: '2018-01-30', status: 'active', remark: null }),
     studentRepo.create({ name: '郑星辰', gender: 'male', birthday: '2014-07-19', status: 'inactive', remark: '暂停课中' }),
+    // 买了素描但未预约任何课次:用于演示老师端"临时到课 · 手动扣课时"
+    studentRepo.create({ name: '孙小果', gender: 'male', birthday: '2016-09-14', status: 'active', remark: '偶尔临时来上课' }),
   ]);
   console.log(`学员 ${students.length} 名`);
 
@@ -275,6 +277,7 @@ async function main() {
     { student: students[2], course: '钢琴', name: '钢琴 48 课时包', total: 48, remaining: 40, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 8640, method: 'wechat' },
     { student: students[3], course: '书法', name: '书法 24 课时包', total: 24, remaining: 3, validUntil: dayjs().add(3, 'month').format('YYYY-MM-DD'), amount: 2400, method: 'card' },
     { student: students[4], course: '拉丁舞', name: '拉丁舞 36 课时包', total: 36, remaining: 30, validUntil: dayjs().add(1, 'year').format('YYYY-MM-DD'), amount: 4320, method: 'wechat' },
+    { student: students[6], course: '素描', name: '素描 24 课时包', total: 24, remaining: 18, validUntil: dayjs().add(6, 'month').format('YYYY-MM-DD'), amount: 2640, method: 'cash' },
   ];
   let serial = 0;
   for (const def of pkgDefs) {

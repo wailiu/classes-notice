@@ -15,6 +15,13 @@
   justify-content: space-between;
 }
 
+.tags {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
 .name {
   font-size: 30rpx;
   font-weight: 600;
@@ -37,6 +44,73 @@
 }
 
 .checkin-btn {
+  margin-top: 20rpx;
+  width: 100%;
+}
+
+/* ---- 临时到课 ---- */
+.walkin-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.walkin-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.walkin-toggle {
+  font-size: 22rpx;
+  color: #8494ab;
+}
+
+.walkin-tip {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 10rpx;
+  line-height: 1.6;
+}
+
+.walkin-seats {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #1f9d55;
+}
+
+.walkin-seats.full {
+  color: #d9483b;
+}
+
+.walkin-select {
+  margin-top: 16rpx;
+  background: #eaeff7;
+  border-radius: 16rpx;
+  padding: 22rpx 28rpx;
+  font-size: 28rpx;
+  color: #8494ab;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.walkin-select.picked {
+  background: #e8f0fd;
+  color: #1c2b40;
+  font-weight: 600;
+}
+
+.walkin-select.disabled {
+  opacity: 0.5;
+}
+
+.walkin-arrow {
+  color: #8494ab;
+  font-size: 24rpx;
+}
+
+.walkin-btn {
   margin-top: 20rpx;
   width: 100%;
 }

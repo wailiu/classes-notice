@@ -483,6 +483,7 @@ export class MiniService {
       students: bookings.map((b) => ({
         bookingId: b.id,
         status: b.status,
+        source: b.source,
         studentId: b.studentId,
         name: b.student.name,
         gender: b.student.gender,
@@ -507,6 +508,90 @@ export class MiniService {
       throw new ForbiddenException('只能操作自己所教课次');
     }
     return this.bookings.checkin(bookingId);
+  }
+
+  /**
+   * 临时到课候选学员:购买了本课次课种、且有可用课时(剩余>0、未过期)的在读学员,
+   * 排除已在本课次名单中的;按剩余课时降序。
+   */
+  async teacherWalkinCandidates(teacherId: number, lessonId: number) {
+    const lesson = await this.lessonRepo.findOne({
+      where: { id: lessonId },
+      relations: { classEntity: { course: true } },
+    });
+    if (!lesson) throw new NotFoundException('课次不存在');
+    if (lesson.classEntity.teacherId !== teacherId) {
+      throw new ForbiddenException('只能操作自己所教课次');
+    }
+    if (lesson.status !== 'scheduled') throw new BadRequestException('该课次已取消或已结课,不可登记');
+
+    const [packages, bookings] = await Promise.all([
+      this.pkgRepo.find({
+        where: { courseId: lesson.classEntity.courseId },
+        relations: { student: true },
+      }),
+      this.bookingRepo.find({ where: { lessonId, status: In(['booked', 'checked_in']) } }),
+    ]);
+    const bookedStudentIds = new Set(bookings.map((b) => b.studentId));
+    const now = dayjs();
+    const byStudent = new Map<number, { studentId: number; name: string; remaining: number }>();
+    for (const p of packages) {
+      if (!p.student || p.student.status !== 'active') continue;
+      if (p.status !== 'active' || p.remainingLessons <= 0) continue;
+      if (p.validUntil && dayjs(p.validUntil).endOf('day').isBefore(now)) continue;
+      const cur = byStudent.get(p.studentId) ?? {
+        studentId: p.studentId,
+        name: p.student.name,
+        remaining: 0,
+      };
+      cur.remaining += p.remainingLessons;
+      byStudent.set(p.studentId, cur);
+    }
+    return {
+      lesson: {
+        id: lesson.id,
+        date: dayjs(lesson.date).format('YYYY-MM-DD'),
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+        className: lesson.classEntity.name,
+        courseName: lesson.classEntity.course.name,
+        room: lesson.classEntity.room,
+        capacity: lesson.classEntity.capacity,
+      },
+      remainingSeats: Math.max(0, lesson.classEntity.capacity - bookings.length),
+      students: [...byStudent.values()]
+        .filter((s) => !bookedStudentIds.has(s.studentId))
+        .sort((a, b) => b.remaining - a.remaining || a.name.localeCompare(b.name, 'zh')),
+    };
+  }
+
+  /** 临时到课登记:登记即签到并扣 1 课时(与预约同一套规则,允许已开始的课次) */
+  async teacherWalkin(teacherId: number, lessonId: number, studentId: number) {
+    const lesson = await this.lessonRepo.findOne({
+      where: { id: lessonId },
+      relations: { classEntity: true },
+    });
+    if (!lesson) throw new NotFoundException('课次不存在');
+    if (lesson.classEntity.teacherId !== teacherId) {
+      throw new ForbiddenException('只能操作自己所教课次');
+    }
+    const booking = await this.bookings.book({
+      studentId,
+      lessonId,
+      source: 'teacher',
+      allowStarted: true,
+      checkinNow: true,
+    });
+    const pkg = booking.packageId
+      ? await this.pkgRepo.findOne({ where: { id: booking.packageId } })
+      : null;
+    return {
+      bookingId: booking.id,
+      studentId,
+      deducted: 1,
+      packageName: pkg?.name ?? null,
+      remainingAfter: pkg?.remainingLessons ?? 0,
+    };
   }
 
   // ==================== 校长端 ====================
