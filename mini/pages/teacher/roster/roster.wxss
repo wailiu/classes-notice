@@ -4,7 +4,7 @@
 }
 
 .head .meta {
-  color: #948b7d;
+  color: #8494ab;
   font-size: 24rpx;
   margin-top: 12rpx;
 }
@@ -22,7 +22,7 @@
 
 .gender {
   font-size: 22rpx;
-  color: #948b7d;
+  color: #8494ab;
   margin-left: 8rpx;
 }
 
@@ -31,7 +31,7 @@
 }
 
 .parent {
-  color: #e8542c;
+  color: #2563eb;
   font-size: 24rpx;
   padding: 4rpx 0;
 }

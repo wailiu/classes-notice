@@ -12,14 +12,14 @@
 .row2 {
   display: flex;
   gap: 20rpx;
-  color: #948b7d;
+  color: #8494ab;
   font-size: 24rpx;
   margin-top: 14rpx;
   flex-wrap: wrap;
 }
 
 .row3 {
-  color: #b6ac9d;
+  color: #9dacc2;
   font-size: 22rpx;
   margin-top: 10rpx;
 }

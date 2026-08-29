@@ -1,0 +1,291 @@
+.header {
+  background: linear-gradient(135deg, #4a8cff, #2563eb);
+  color: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(37, 99, 235, 0.24);
+}
+
+.hello {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.sub {
+  font-size: 24rpx;
+  opacity: 0.88;
+  margin-top: 10rpx;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+.card-title.warn {
+  color: #dd7a1c;
+}
+
+/* ---- 经营概况 ---- */
+.stat-grid {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 6rpx;
+}
+
+/* ---- 费用概况 ---- */
+.income-hero {
+  text-align: center;
+  padding: 8rpx 0 20rpx;
+}
+
+.income-num {
+  font-size: 68rpx;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1.2;
+}
+
+.income-label {
+  font-size: 24rpx;
+  color: #8494ab;
+  letter-spacing: 2rpx;
+  margin-top: 4rpx;
+}
+
+.income-row {
+  display: flex;
+  border-top: 1rpx solid #e8eef6;
+  padding-top: 20rpx;
+}
+
+.income-item {
+  flex: 1;
+  text-align: center;
+}
+
+.income-item-num {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.income-item-num.refund {
+  color: #dd7a1c;
+}
+
+.income-item-label {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 4rpx;
+}
+
+.pkg-line {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #8494ab;
+}
+
+/* ---- 各课种情况 ---- */
+.course-row {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e8eef6;
+}
+
+.course-row:last-child {
+  border-bottom: none;
+  padding-bottom: 4rpx;
+}
+
+.course-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.course-name {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.course-income {
+  font-size: 24rpx;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.course-meta {
+  display: flex;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: #8494ab;
+  margin: 8rpx 0 10rpx;
+}
+
+.bar {
+  height: 12rpx;
+  background: #eaeff7;
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.bar-inner {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #4a8cff, #2563eb);
+}
+
+/* ---- 课次安排 ---- */
+.day-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #8494ab;
+  letter-spacing: 2rpx;
+  margin: 20rpx 0 12rpx;
+}
+
+.day-title:first-of-type {
+  margin-top: 0;
+}
+
+.lesson {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e8eef6;
+}
+
+.lesson:last-child {
+  border-bottom: none;
+}
+
+.lesson-time {
+  width: 96rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lesson-time-main {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.lesson-time-sub {
+  font-size: 20rpx;
+  color: #8494ab;
+}
+
+.lesson-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson-course {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.lesson-meta {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 4rpx;
+}
+
+.lesson-booked {
+  font-size: 24rpx;
+  color: #8494ab;
+  flex-shrink: 0;
+}
+
+.lesson-booked .full {
+  color: #d9483b;
+  font-weight: 600;
+}
+
+/* ---- 缴费流水 ---- */
+.payment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e8eef6;
+}
+
+.payment:last-child {
+  border-bottom: none;
+}
+
+.payment-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.payment-meta {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 6rpx;
+}
+
+.payment-amount {
+  font-size: 28rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.payment-amount.in {
+  color: #1f9d55;
+}
+
+.payment-amount.out {
+  color: #dd7a1c;
+}
+
+/* ---- 剩余课时预警 ---- */
+.warn-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 0;
+  flex-wrap: wrap;
+}
+
+.warn-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-right: 8rpx;
+}
+
+.warn-tip {
+  font-size: 22rpx;
+  color: #8494ab;
+  margin-top: 8rpx;
+}
+
+.logout {
+  text-align: center;
+  color: #9dacc2;
+  font-size: 24rpx;
+  margin: 32rpx 0;
+}

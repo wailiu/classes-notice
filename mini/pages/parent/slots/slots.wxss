@@ -17,7 +17,7 @@
 /* ---------- 预约方式 ---------- */
 .mode-tabs {
   display: flex;
-  background: #f1ede6;
+  background: #eaeff7;
   border-radius: 999rpx;
   padding: 6rpx;
   margin-bottom: 24rpx;
@@ -29,14 +29,14 @@
   font-size: 28rpx;
   padding: 14rpx 0;
   border-radius: 999rpx;
-  color: #7a7266;
+  color: #5f6f85;
 }
 
 .mode-tab.active {
   background: #fff;
-  color: #e8542c;
+  color: #2563eb;
   font-weight: 600;
-  box-shadow: 0 4rpx 12rpx rgba(96, 74, 52, 0.1);
+  box-shadow: 0 4rpx 12rpx rgba(30, 64, 120, 0.1);
 }
 
 /* ---------- 时段筛选(仅辅助浏览,不限制勾选) ---------- */
@@ -50,13 +50,13 @@
 .chip {
   flex: 1 0 auto;
   box-sizing: border-box;
-  border: 2rpx solid #e9e2d6;
+  border: 2rpx solid #dbe4f0;
   border-radius: 999rpx;
   padding: 10rpx 26rpx;
   margin-right: 14rpx;
   text-align: center;
   font-size: 24rpx;
-  color: #7a7266;
+  color: #5f6f85;
   background: #fff;
 }
 
@@ -65,9 +65,9 @@
 }
 
 .chip.active {
-  border-color: #e8542c;
-  background: #fdf0e9;
-  color: #e8542c;
+  border-color: #2563eb;
+  background: #e8f0fd;
+  color: #2563eb;
   font-weight: 600;
 }
 
@@ -80,12 +80,12 @@
 
 .list-tip {
   font-size: 24rpx;
-  color: #948b7d;
+  color: #8494ab;
 }
 
 .select-all {
   font-size: 24rpx;
-  color: #e8542c;
+  color: #2563eb;
   font-weight: 600;
 }
 
@@ -103,7 +103,7 @@
 .sub-tip {
   font-size: 22rpx;
   font-weight: 400;
-  color: #948b7d;
+  color: #8494ab;
   margin-left: 12rpx;
 }
 
@@ -114,7 +114,7 @@
   gap: 16rpx;
   padding: 20rpx 12rpx;
   border-radius: 16rpx;
-  border-bottom: 1rpx solid #f3efe8;
+  border-bottom: 1rpx solid #e8eef6;
 }
 
 .lesson-row.disabled {
@@ -122,7 +122,7 @@
 }
 
 .lesson-row.checked {
-  background: #fdf4ee;
+  background: #eef4fd;
   border-bottom-color: transparent;
 }
 
@@ -131,21 +131,21 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
-  border: 2rpx solid #e9e2d6;
+  border: 2rpx solid #dbe4f0;
   border-radius: 16rpx;
   padding: 20rpx;
   margin-bottom: 14rpx;
 }
 
 .pattern-row.checked {
-  border-color: #e8542c;
-  background: #fdf4ee;
+  border-color: #2563eb;
+  background: #eef4fd;
 }
 
 .checkbox {
   width: 38rpx;
   height: 38rpx;
-  border: 2rpx solid #d8d0c2;
+  border: 2rpx solid #c3d0e2;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -156,8 +156,8 @@
 }
 
 .checkbox.on {
-  background: #e8542c;
-  border-color: #e8542c;
+  background: #2563eb;
+  border-color: #2563eb;
 }
 
 .lesson-info {
@@ -171,7 +171,7 @@
 
 .lesson-time {
   font-size: 22rpx;
-  color: #948b7d;
+  color: #8494ab;
   margin-top: 6rpx;
 }
 
@@ -185,22 +185,22 @@
 .range-opt {
   flex: 1;
   text-align: center;
-  border: 2rpx solid #e9e2d6;
+  border: 2rpx solid #dbe4f0;
   border-radius: 999rpx;
   padding: 16rpx 0;
   font-size: 28rpx;
-  color: #7a7266;
+  color: #5f6f85;
 }
 
 .range-opt.active {
-  border-color: #e8542c;
-  background: #fdf0e9;
-  color: #e8542c;
+  border-color: #2563eb;
+  background: #e8f0fd;
+  color: #2563eb;
   font-weight: 600;
 }
 
 .lt-summary {
-  background: #faf6f0;
+  background: #f3f7fd;
   border-radius: 16rpx;
   padding: 22rpx;
   margin-top: 18rpx;
@@ -208,7 +208,7 @@
 }
 
 .hl {
-  color: #e8542c;
+  color: #2563eb;
   font-weight: 700;
 }
 
@@ -229,13 +229,13 @@
   align-items: center;
   gap: 20rpx;
   padding: 18rpx 28rpx calc(18rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -6rpx 20rpx rgba(96, 74, 52, 0.08);
+  box-shadow: 0 -6rpx 20rpx rgba(30, 64, 120, 0.08);
 }
 
 .bar-info {
   flex: 1;
   font-size: 24rpx;
-  color: #7a7266;
+  color: #5f6f85;
 }
 
 .bar-btn {
@@ -247,7 +247,7 @@
 .result-mask {
   position: fixed;
   inset: 0;
-  background: rgba(43, 36, 28, 0.5);
+  background: rgba(28, 43, 64, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -274,7 +274,7 @@
 .result-summary {
   font-size: 26rpx;
   text-align: center;
-  color: #7a7266;
+  color: #5f6f85;
   margin: 18rpx 0;
 }
 
@@ -289,7 +289,7 @@
   justify-content: space-between;
   font-size: 24rpx;
   padding: 14rpx 0;
-  border-bottom: 1rpx solid #f3efe8;
+  border-bottom: 1rpx solid #e8eef6;
 }
 
 .ok-text {

@@ -12,6 +12,7 @@ import {
   Booking,
   Course,
   ClassEntity,
+  Payment,
 } from '../entities';
 import { BookingsService } from '../bookings/bookings.service';
 
@@ -23,6 +24,18 @@ function periodOf(startTime: string): string {
   if (startTime < '18:00') return '下午';
   return '晚上';
 }
+
+/** 校长端:剩余课时预警阈值(与后台工作台一致) */
+const LOW_HOURS_LIMIT = Number(process.env.LOW_HOURS_THRESHOLD || 3);
+
+/** 校长端:缴费方式中文文案 */
+const METHOD_TEXT: Record<string, string> = {
+  wechat: '微信',
+  alipay: '支付宝',
+  cash: '现金',
+  card: '银行卡',
+  other: '其他',
+};
 
 @Injectable()
 export class MiniService {
@@ -36,6 +49,8 @@ export class MiniService {
     @InjectRepository(Course) private readonly courseRepo: Repository<Course>,
     @InjectRepository(ClassEntity) private readonly classRepo: Repository<ClassEntity>,
     private readonly bookings: BookingsService,
+    @InjectRepository(Student) private readonly studentRepo: Repository<Student>,
+    @InjectRepository(Payment) private readonly paymentRepo: Repository<Payment>,
   ) {}
 
   /** 家长名下孩子列表(含剩余课时汇总) */
@@ -492,5 +507,184 @@ export class MiniService {
       throw new ForbiddenException('只能操作自己所教课次');
     }
     return this.bookings.checkin(bookingId);
+  }
+
+  // ==================== 校长端 ====================
+
+  /**
+   * 校长工作台总览:经营概况 + 按课种的课时/本月收入统计 + 剩余课时预警。
+   * 收入只统计状态为 paid 的流水;本月收入按缴费时间(paidAt)落在当月计。
+   */
+  async principalOverview() {
+    const today = dayjs().format('YYYY-MM-DD');
+    const weekEnd = dayjs().add(6, 'day').format('YYYY-MM-DD');
+    const todayStart = dayjs().format('YYYY-MM-DD 00:00:00');
+    const monthStart = dayjs().startOf('month').format('YYYY-MM-DD 00:00:00');
+
+    const [activeStudents, activeTeachers, todayLessons, weekLessons, activePackages, monthRefund] =
+      await Promise.all([
+        this.studentRepo.count({ where: { status: 'active' } }),
+        this.teacherRepo.count({ where: { status: 'active' } }),
+        this.lessonRepo.count({ where: { date: today, status: 'scheduled' } }),
+        this.lessonRepo
+          .createQueryBuilder('l')
+          .where('l.date BETWEEN :from AND :to', { from: today, to: weekEnd })
+          .andWhere("l.status = 'scheduled'")
+          .getCount(),
+        this.pkgRepo.count({ where: { status: 'active' } }),
+        this.paymentRepo
+          .createQueryBuilder('p')
+          .select('COALESCE(SUM(p.amount), 0)', 'sum')
+          .where("p.status = 'refunded'")
+          .andWhere('p.paidAt >= :monthStart', { monthStart })
+          .getRawOne(),
+      ]);
+
+    const sumIncome = async (from?: string) => {
+      const qb = this.paymentRepo
+        .createQueryBuilder('p')
+        .select('COALESCE(SUM(p.amount), 0)', 'sum')
+        .where("p.status = 'paid'");
+      if (from) qb.andWhere('p.paidAt >= :from', { from });
+      return Number((await qb.getRawOne())?.sum ?? 0);
+    };
+    const [todayIncome, monthIncome, totalIncome] = await Promise.all([
+      sumIncome(todayStart),
+      sumIncome(monthStart),
+      sumIncome(),
+    ]);
+
+    // 各课种的有效课时包数与剩余课时(不含已过期/用完/退费的包)
+    const hourRows = await this.pkgRepo
+      .createQueryBuilder('pkg')
+      .leftJoin('pkg.course', 'course')
+      .select('course.id', 'courseId')
+      .addSelect('course.name', 'courseName')
+      .addSelect('COUNT(DISTINCT pkg.id)', 'packageCount')
+      .addSelect('COALESCE(SUM(pkg.remainingLessons), 0)', 'remainingLessons')
+      .where("pkg.status = 'active'")
+      .andWhere('pkg.courseId IS NOT NULL')
+      .groupBy('course.id')
+      .addGroupBy('course.name')
+      .getRawMany();
+
+    // 各课种本月收入(按缴费流水所关联课时包的课种归集)
+    const incomeRows = await this.paymentRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.coursePackage', 'pkg')
+      .leftJoin('pkg.course', 'course')
+      .select('course.id', 'courseId')
+      .addSelect('COALESCE(SUM(p.amount), 0)', 'income')
+      .where("p.status = 'paid'")
+      .andWhere('p.paidAt >= :monthStart', { monthStart })
+      .andWhere('pkg.courseId IS NOT NULL')
+      .groupBy('course.id')
+      .getRawMany();
+    const incomeByCourse = new Map<number, number>(
+      incomeRows.map((r) => [Number(r.courseId), Number(r.income)]),
+    );
+
+    const courses = hourRows
+      .map((r) => ({
+        courseId: Number(r.courseId),
+        courseName: r.courseName,
+        packageCount: Number(r.packageCount),
+        remainingLessons: Number(r.remainingLessons),
+        monthIncome: incomeByCourse.get(Number(r.courseId)) ?? 0,
+      }))
+      .sort((a, b) => b.monthIncome - a.monthIncome || b.remainingLessons - a.remainingLessons);
+
+    return {
+      activeStudents,
+      activeTeachers,
+      todayLessons,
+      weekLessons,
+      activePackages,
+      todayIncome,
+      monthIncome,
+      totalIncome,
+      monthRefund: Number(monthRefund?.sum ?? 0),
+      courses,
+      lowHours: await this.lowHoursPackages(),
+    };
+  }
+
+  /** 校长视角:未来 N 天(含今天)的课次安排,含预约人数/容量 */
+  async principalLessons(days = 7) {
+    const from = dayjs().format('YYYY-MM-DD');
+    const to = dayjs().add(days - 1, 'day').format('YYYY-MM-DD');
+    const lessons = await this.lessonRepo
+      .createQueryBuilder('lesson')
+      .leftJoinAndSelect('lesson.classEntity', 'cls')
+      .leftJoinAndSelect('cls.course', 'course')
+      .leftJoinAndSelect('cls.teacher', 'teacher')
+      .loadRelationCountAndMap('lesson.bookedCount', 'lesson.bookings', 'b', (sub) =>
+        sub.andWhere("b.status IN ('booked','checked_in')"),
+      )
+      .where('lesson.date BETWEEN :from AND :to', { from, to })
+      .andWhere("lesson.status = 'scheduled'")
+      .orderBy('lesson.date', 'ASC')
+      .addOrderBy('lesson.startTime', 'ASC')
+      .getMany();
+
+    return lessons.map((lesson) => {
+      const bookedCount = (lesson as Lesson & { bookedCount?: number }).bookedCount ?? 0;
+      const weekday = dayjs(lesson.date).day();
+      return {
+        id: lesson.id,
+        date: dayjs(lesson.date).format('YYYY-MM-DD'),
+        weekdayText: WEEKDAY_TEXT[(weekday === 0 ? 7 : weekday) - 1] ?? '',
+        startTime: lesson.startTime,
+        endTime: lesson.endTime,
+        className: lesson.classEntity.name,
+        courseName: lesson.classEntity.course.name,
+        teacherName: lesson.classEntity.teacher.name,
+        room: lesson.classEntity.room,
+        capacity: lesson.classEntity.capacity,
+        bookedCount,
+      };
+    });
+  }
+
+  /** 校长视角:最近缴费/退费流水(含学员与课种) */
+  async principalPayments(limit = 20) {
+    const payments = await this.paymentRepo.find({
+      relations: { student: true, coursePackage: { course: true } },
+      order: { paidAt: 'DESC', id: 'DESC' },
+      take: limit,
+    });
+    return payments.map((p) => ({
+      id: p.id,
+      serialNo: p.serialNo,
+      studentName: p.student?.name ?? '',
+      courseName: p.coursePackage?.course?.name ?? null,
+      packageName: p.coursePackage?.name ?? null,
+      amount: Number(p.amount),
+      method: p.method,
+      methodText: METHOD_TEXT[p.method] ?? p.method,
+      status: p.status,
+      paidAt: dayjs(p.paidAt).format('YYYY-MM-DD HH:mm'),
+      remark: p.remark,
+    }));
+  }
+
+  /** 剩余课时预警(与后台工作台同一阈值 LOW_HOURS_THRESHOLD) */
+  private async lowHoursPackages() {
+    const list = await this.pkgRepo
+      .createQueryBuilder('pkg')
+      .leftJoinAndSelect('pkg.student', 'student')
+      .leftJoinAndSelect('pkg.course', 'course')
+      .where("pkg.status = 'active'")
+      .andWhere('pkg.remainingLessons <= :limit', { limit: LOW_HOURS_LIMIT })
+      .orderBy('pkg.remainingLessons', 'ASC')
+      .addOrderBy('pkg.id', 'ASC')
+      .getMany();
+    return list.map((p) => ({
+      id: p.id,
+      studentName: p.student?.name ?? '',
+      courseName: p.course?.name ?? '未绑定课种',
+      remainingLessons: p.remainingLessons,
+      totalLessons: p.totalLessons,
+    }));
   }
 }

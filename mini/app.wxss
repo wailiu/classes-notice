@@ -1,8 +1,8 @@
-/* 设计基调:暖纸面 + 朱红点缀,画廊式留白 */
+/* 设计基调:冷蓝画布 + 品牌蓝点缀,画廊式留白 */
 page {
-  background: #f7f3ec;
+  background: #f1f5fb;
   font-size: 28rpx;
-  color: #2b241c;
+  color: #1c2b40;
   line-height: 1.5;
 }
 
@@ -15,28 +15,28 @@ button::after {
   border-radius: 24rpx;
   padding: 28rpx;
   margin: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(96, 74, 52, 0.07);
+  box-shadow: 0 8rpx 28rpx rgba(30, 64, 120, 0.07);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #f0653a, #e8542c);
+  background: linear-gradient(135deg, #4a8cff, #2563eb);
   color: #fff;
   border-radius: 999rpx;
   font-size: 30rpx;
   font-weight: 600;
-  box-shadow: 0 8rpx 20rpx rgba(232, 84, 44, 0.26);
+  box-shadow: 0 8rpx 20rpx rgba(37, 99, 235, 0.26);
 }
 
 .btn-primary[disabled] {
-  background: #f2cabb;
+  background: #b9cdf4;
   color: #fff;
   box-shadow: none;
 }
 
 .btn-outline {
   background: #fff;
-  color: #e8542c;
-  border: 2rpx solid #e8542c;
+  color: #2563eb;
+  border: 2rpx solid #2563eb;
   border-radius: 999rpx;
 }
 
@@ -49,8 +49,8 @@ button::after {
 }
 
 .tag-blue {
-  background: #eef1fc;
-  color: #5a6fd6;
+  background: #e7effc;
+  color: #2e6be6;
 }
 
 .tag-green {
@@ -69,13 +69,13 @@ button::after {
 }
 
 .tag-gray {
-  background: #f1ede6;
-  color: #948b7d;
+  background: #eaeff7;
+  color: #8494ab;
 }
 
 .empty {
   text-align: center;
-  color: #b6ac9d;
+  color: #9dacc2;
   padding: 80rpx 0;
   font-size: 26rpx;
 }

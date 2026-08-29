@@ -1,7 +1,7 @@
 .header {
-  background: linear-gradient(135deg, #f0653a, #f2924f);
+  background: linear-gradient(135deg, #4a8cff, #7db0ff);
   color: #fff;
-  box-shadow: 0 10rpx 28rpx rgba(232, 84, 44, 0.24);
+  box-shadow: 0 10rpx 28rpx rgba(37, 99, 235, 0.24);
 }
 
 .hello {
@@ -19,7 +19,7 @@
 .day-title {
   font-size: 24rpx;
   font-weight: 600;
-  color: #948b7d;
+  color: #8494ab;
   letter-spacing: 2rpx;
   margin: 24rpx 28rpx 0;
 }
@@ -38,21 +38,21 @@
 .row2 {
   display: flex;
   gap: 24rpx;
-  color: #948b7d;
+  color: #8494ab;
   font-size: 24rpx;
   margin-top: 14rpx;
   flex-wrap: wrap;
 }
 
 .link {
-  color: #e8542c;
+  color: #2563eb;
   font-weight: 600;
   margin-left: auto;
 }
 
 .logout {
   text-align: center;
-  color: #b6ac9d;
+  color: #9dacc2;
   font-size: 24rpx;
   margin: 32rpx 0;
 }

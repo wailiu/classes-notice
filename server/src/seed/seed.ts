@@ -80,8 +80,10 @@ async function main() {
     adminRepo.create({
       username: 'admin',
       passwordHash: await bcrypt.hash('admin123', 10),
-      name: '超级管理员',
+      name: '王校长',
       role: 'super',
+      // 绑定微信 openid 后可在小程序以「校长」身份进入工作台(开发模式 mock 码: mock-principal-1)
+      wxOpenid: 'mock-principal-1',
     }),
     adminRepo.create({
       username: 'reception',
@@ -90,7 +92,7 @@ async function main() {
       role: 'staff',
     }),
   ]);
-  console.log('管理员: admin/admin123(超管), reception/reception123(前台教务)');
+  console.log('管理员: admin/admin123(校长), reception/reception123(前台教务)');
 
   // ---------- 8 门艺术课 ----------
   const courseRepo = dataSource.getRepository(Course);

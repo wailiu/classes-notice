@@ -9,7 +9,7 @@
   margin: 0 auto;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 12rpx 32rpx rgba(96, 74, 52, 0.12);
+  box-shadow: 0 12rpx 32rpx rgba(30, 64, 120, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,7 +24,7 @@
 }
 
 .subtitle {
-  color: #948b7d;
+  color: #8494ab;
   font-size: 24rpx;
   margin-top: 16rpx;
   white-space: pre-line;
@@ -34,7 +34,7 @@
 
 .desc {
   text-align: center;
-  color: #b6ac9d;
+  color: #9dacc2;
   font-size: 22rpx;
   margin-top: 20rpx;
 }

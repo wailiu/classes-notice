@@ -20,6 +20,9 @@ export class AdminUser {
   @Column({ type: 'varchar', length: 20, default: 'staff', comment: '角色: super=超管, staff=前台教务' })
   role: AdminRole;
 
+  @Column({ type: 'varchar', length: 64, nullable: true, unique: true, comment: '微信 openid,super 绑定后可在小程序以校长身份登录' })
+  wxOpenid: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

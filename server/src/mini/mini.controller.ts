@@ -51,7 +51,12 @@ export class MiniController {
 
   @Get('me')
   me(@CurrentUser() user: MiniJwtPayload) {
-    return { role: user.role, parentId: user.parentId ?? null, teacherId: user.teacherId ?? null };
+    return {
+      role: user.role,
+      parentId: user.parentId ?? null,
+      teacherId: user.teacherId ?? null,
+      adminUserId: user.adminUserId ?? null,
+    };
   }
 
   // ---------- 家长端 ----------
@@ -140,5 +145,28 @@ export class MiniController {
   @Post('teacher/bookings/:id/checkin')
   checkin(@CurrentUser() user: MiniJwtPayload, @Param('id', ParseIntPipe) id: number) {
     return this.service.teacherCheckin(user.teacherId!, id);
+  }
+
+  // ---------- 校长端 ----------
+
+  /** 工作台总览:经营概况 + 按课种课时/收入 + 剩余课时预警 */
+  @Roles('principal')
+  @Get('principal/overview')
+  principalOverview() {
+    return this.service.principalOverview();
+  }
+
+  /** 未来 N 天课次安排(默认 7 天,含预约人数/容量) */
+  @Roles('principal')
+  @Get('principal/lessons')
+  principalLessons(@Query('days') days?: number) {
+    return this.service.principalLessons(days ? Number(days) : 7);
+  }
+
+  /** 最近缴费/退费流水(默认 20 条) */
+  @Roles('principal')
+  @Get('principal/payments')
+  principalPayments(@Query('limit') limit?: number) {
+    return this.service.principalPayments(limit ? Number(limit) : 20);
   }
 }

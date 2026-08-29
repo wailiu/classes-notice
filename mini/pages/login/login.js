@@ -40,12 +40,11 @@ Page({
     wx.setStorageSync('token', res.token);
     wx.setStorageSync('role', res.role);
     wx.setStorageSync('profile', res.profile || {});
-    if (res.role === 'parent') {
-      wx.reLaunch({ url: '/pages/parent/home/home' });
-    } else if (res.role === 'teacher') {
-      wx.reLaunch({ url: '/pages/teacher/home/home' });
-    } else {
-      wx.reLaunch({ url: '/pages/unbound/unbound' });
-    }
+    const homeByRole = {
+      parent: '/pages/parent/home/home',
+      teacher: '/pages/teacher/home/home',
+      principal: '/pages/principal/home/home',
+    };
+    wx.reLaunch({ url: homeByRole[res.role] || '/pages/unbound/unbound' });
   },
 });

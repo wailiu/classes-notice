@@ -77,6 +77,8 @@ describe('MiniService.availableLessons 课种可约标记', () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any,
+      {} as any,
     );
   });
 
@@ -170,6 +172,8 @@ describe('MiniService.parentCourses 课种列表已购置顶', () => {
       {} as any,
       courseRepo,
       classRepo,
+      {} as any,
+      {} as any,
       {} as any,
     );
   });
@@ -272,6 +276,8 @@ describe('MiniService.courseSlots 课种时段与课次', () => {
       pkgRepo,
       bookingRepo,
       courseRepo,
+      {} as any,
+      {} as any,
       {} as any,
       {} as any,
     );

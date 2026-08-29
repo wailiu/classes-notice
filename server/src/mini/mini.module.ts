@@ -10,6 +10,7 @@ import {
   Lesson,
   CoursePackage,
   Booking,
+  Payment,
 } from '../entities';
 import { BookingsModule } from '../bookings/bookings.module';
 import { MiniService } from './mini.service';
@@ -27,6 +28,7 @@ import { MiniController } from './mini.controller';
       Lesson,
       CoursePackage,
       Booking,
+      Payment,
     ]),
     BookingsModule,
   ],

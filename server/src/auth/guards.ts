@@ -19,9 +19,10 @@ export interface AdminJwtPayload {
 
 export interface MiniJwtPayload {
   sub: string; // openid
-  role: 'parent' | 'teacher' | 'none';
+  role: 'parent' | 'teacher' | 'principal' | 'none';
   parentId?: number;
   teacherId?: number;
+  adminUserId?: number;
   scope: 'mini';
 }
 

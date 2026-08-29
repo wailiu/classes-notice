@@ -7,13 +7,14 @@
     "pages/parent/bookings/bookings",
     "pages/teacher/home/home",
     "pages/teacher/roster/roster",
+    "pages/principal/home/home",
     "pages/unbound/unbound"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#f7f3ec",
+    "navigationBarBackgroundColor": "#f1f5fb",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "艺术培训学校",
-    "backgroundColor": "#f7f3ec"
+    "backgroundColor": "#f1f5fb"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json",

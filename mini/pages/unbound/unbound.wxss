@@ -9,7 +9,7 @@
   height: 152rpx;
   margin: 0 auto;
   border-radius: 50%;
-  background: #f7f3ec;
+  background: #f1f5fb;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,7 +24,7 @@
 }
 
 .desc {
-  color: #948b7d;
+  color: #8494ab;
   font-size: 26rpx;
   margin: 24rpx 0 44rpx;
   white-space: pre-line;
@@ -40,6 +40,6 @@
 
 .outline {
   background: #fff;
-  color: #e8542c;
-  border: 2rpx solid #e8542c;
+  color: #2563eb;
+  border: 2rpx solid #2563eb;
 }

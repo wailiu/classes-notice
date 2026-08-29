@@ -7,11 +7,12 @@
 
   <view class="card">
     <button class="btn-primary" loading="{{loading}}" bindtap="wxLogin">微信一键登录</button>
-    <view class="desc">登录后自动识别家长 / 老师身份</view>
+    <view class="desc">登录后自动识别校长 / 家长 / 老师身份</view>
   </view>
 
   <view class="card" wx:if="{{devMock}}">
     <view class="dev-title">开发模式 · 模拟身份登录</view>
+    <button class="mock-btn" size="mini" data-code="mock-principal-1" bindtap="mockLogin">校长(王校长,经营总览)</button>
     <button class="mock-btn" size="mini" data-code="mock-parent-1" bindtap="mockLogin">家长(张爸爸,两个孩子)</button>
     <button class="mock-btn" size="mini" data-code="mock-parent-2" bindtap="mockLogin">家长(刘妈妈)</button>
     <button class="mock-btn" size="mini" data-code="mock-teacher-1" bindtap="mockLogin">老师(王雪,素描/创意美术)</button>

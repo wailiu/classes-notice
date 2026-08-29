@@ -1,7 +1,7 @@
 .header {
-  background: linear-gradient(135deg, #f0653a, #f2924f);
+  background: linear-gradient(135deg, #4a8cff, #7db0ff);
   color: #fff;
-  box-shadow: 0 10rpx 28rpx rgba(232, 84, 44, 0.24);
+  box-shadow: 0 10rpx 28rpx rgba(37, 99, 235, 0.24);
 }
 
 .hello {
@@ -26,13 +26,13 @@
 .child-tab {
   padding: 12rpx 32rpx;
   border-radius: 999rpx;
-  background: #f1ede6;
-  color: #7a7266;
+  background: #eaeff7;
+  color: #5f6f85;
   font-size: 26rpx;
 }
 
 .child-tab.active {
-  background: #2b241c;
+  background: #1c2b40;
   color: #fff;
   font-weight: 600;
 }
@@ -45,12 +45,12 @@
 .big-num {
   font-size: 88rpx;
   font-weight: 700;
-  color: #e8542c;
+  color: #2563eb;
   line-height: 1.1;
 }
 
 .big-label {
-  color: #948b7d;
+  color: #8494ab;
   font-size: 24rpx;
   letter-spacing: 2rpx;
   margin-top: 4rpx;
@@ -62,7 +62,7 @@
 }
 
 .pkg {
-  border-top: 1rpx solid #f3efe8;
+  border-top: 1rpx solid #e8eef6;
   padding: 20rpx 0;
 }
 
@@ -86,8 +86,8 @@
 
 .outline {
   background: #fff;
-  color: #e8542c;
-  border: 2rpx solid #e8542c;
+  color: #2563eb;
+  border: 2rpx solid #2563eb;
 }
 
 .empty {
@@ -96,7 +96,7 @@
 
 .logout {
   text-align: center;
-  color: #b6ac9d;
+  color: #9dacc2;
   font-size: 24rpx;
   margin: 32rpx 0;
 }

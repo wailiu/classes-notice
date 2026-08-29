@@ -1,0 +1,134 @@
+<view class="page">
+  <view class="header card">
+    <view class="hello">您好,{{profile.name || '校长'}} 👋</view>
+    <view class="sub">学校经营总览 · 课程与费用一手掌握</view>
+  </view>
+
+  <block wx:if="{{overview}}">
+    <!-- 经营概况 -->
+    <view class="card">
+      <view class="card-title">经营概况</view>
+      <view class="stat-grid">
+        <view class="stat">
+          <view class="stat-num">{{overview.activeStudents}}</view>
+          <view class="stat-label">在读学员</view>
+        </view>
+        <view class="stat">
+          <view class="stat-num">{{overview.todayLessons}}</view>
+          <view class="stat-label">今日课次</view>
+        </view>
+        <view class="stat">
+          <view class="stat-num">{{overview.weekLessons}}</view>
+          <view class="stat-label">未来 7 天课次</view>
+        </view>
+        <view class="stat">
+          <view class="stat-num">{{overview.activeTeachers}}</view>
+          <view class="stat-label">在职老师</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 费用概况 -->
+    <view class="card">
+      <view class="card-title">费用概况</view>
+      <view class="income-hero">
+        <view class="income-num">¥{{overview.monthIncomeText}}</view>
+        <view class="income-label">本月收入</view>
+      </view>
+      <view class="income-row">
+        <view class="income-item">
+          <view class="income-item-num">¥{{overview.todayIncomeText}}</view>
+          <view class="income-item-label">今日收入</view>
+        </view>
+        <view class="income-item">
+          <view class="income-item-num">¥{{overview.totalIncomeText}}</view>
+          <view class="income-item-label">累计收入</view>
+        </view>
+        <view class="income-item">
+          <view class="income-item-num refund">−¥{{overview.monthRefundText}}</view>
+          <view class="income-item-label">本月退费</view>
+        </view>
+      </view>
+      <view class="pkg-line">生效课时包 {{overview.activePackages}} 个</view>
+    </view>
+
+    <!-- 各课种情况 -->
+    <view class="card">
+      <view class="card-title">各课种情况</view>
+      <view wx:if="{{!overview.courses.length}}" class="empty">暂无生效课时包</view>
+      <view class="course-row" wx:for="{{overview.courses}}" wx:key="courseId">
+        <view class="course-head">
+          <text class="course-name">{{item.courseName}}</text>
+          <text class="course-income">本月 ¥{{item.monthIncomeText}}</text>
+        </view>
+        <view class="course-meta">
+          <text>{{item.packageCount}} 个包在学</text>
+          <text>·</text>
+          <text>剩余 {{item.remainingLessons}} 课时</text>
+        </view>
+        <view class="bar">
+          <view class="bar-inner" style="width: {{item.barWidth}}%"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 课次安排(未来 7 天) -->
+    <view class="card">
+      <view class="card-title">课次安排 · 未来 7 天</view>
+      <view wx:if="{{!lessonGroups.length}}" class="empty">未来 7 天暂无排课</view>
+      <block wx:for="{{lessonGroups}}" wx:for-item="group" wx:key="date">
+        <view class="day-title">{{group.label}} · {{group.date}}</view>
+        <view class="lesson" wx:for="{{group.items}}" wx:key="id">
+          <view class="lesson-time">
+            <view class="lesson-time-main">{{item.startTime}}</view>
+            <view class="lesson-time-sub">{{item.endTime}}</view>
+          </view>
+          <view class="lesson-info">
+            <view class="lesson-course">{{item.courseName}}</view>
+            <view class="lesson-meta">{{item.teacherName}} · {{item.room}} 教室 · {{item.weekdayText}}</view>
+          </view>
+          <view class="lesson-booked">
+            <text class="{{item.bookedCount >= item.capacity ? 'full' : ''}}">{{item.bookedCount}}</text>
+            /{{item.capacity}} 人
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 最近缴费流水 -->
+    <view class="card">
+      <view class="card-title">最近缴费流水</view>
+      <view wx:if="{{!payments.length}}" class="empty">暂无缴费记录</view>
+      <view class="payment" wx:for="{{payments}}" wx:key="id">
+        <view class="payment-main">
+          <view class="payment-name">
+            {{item.studentName}}
+            <text class="tag tag-blue" wx:if="{{item.courseName}}">{{item.courseName}}</text>
+            <text class="tag tag-orange" wx:if="{{item.status === 'refunded'}}">已退费</text>
+          </view>
+          <view class="payment-meta">{{item.methodText}} · {{item.paidAt}}<block wx:if="{{item.packageName}}"> · {{item.packageName}}</block></view>
+        </view>
+        <view class="payment-amount {{item.income ? 'in' : 'out'}}">
+          {{item.income ? '+' : '−'}}¥{{item.amountText}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 剩余课时预警 -->
+    <view class="card" wx:if="{{overview.lowHours.length}}">
+      <view class="card-title warn">剩余课时预警</view>
+      <view class="warn-row" wx:for="{{overview.lowHours}}" wx:key="id">
+        <text class="warn-name">{{item.studentName}}</text>
+        <text class="tag tag-blue">{{item.courseName}}</text>
+        <text class="tag tag-red">仅剩 {{item.remainingLessons}} 课时</text>
+      </view>
+      <view class="warn-tip">建议安排续费沟通</view>
+    </view>
+  </block>
+
+  <view class="card" wx:if="{{!loading && !overview}}">
+    <view class="empty">数据加载失败,请下拉重试</view>
+  </view>
+
+  <view class="logout" bindtap="logout">退出登录</view>
+</view>

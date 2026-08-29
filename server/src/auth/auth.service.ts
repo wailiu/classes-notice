@@ -47,9 +47,11 @@ export class AuthService {
    */
   async miniLogin(code: string) {
     const openid = await this.wechat.codeToOpenid(code);
-    const [parent, teacher] = await Promise.all([
+    const [parent, teacher, principal] = await Promise.all([
       this.parentRepo.findOne({ where: { wxOpenid: openid } }),
       this.teacherRepo.findOne({ where: { wxOpenid: openid } }),
+      // 校长:绑定 openid 的超管账号(前台教务不开放小程序端)
+      this.adminRepo.findOne({ where: { wxOpenid: openid, role: 'super' } }),
     ]);
 
     let payload: MiniJwtPayload;
@@ -60,6 +62,9 @@ export class AuthService {
     } else if (teacher) {
       payload = { sub: openid, role: 'teacher', teacherId: teacher.id, scope: 'mini' };
       profile = { id: teacher.id, name: teacher.name, phone: teacher.phone, subjects: teacher.subjects };
+    } else if (principal) {
+      payload = { sub: openid, role: 'principal', adminUserId: principal.id, scope: 'mini' };
+      profile = { id: principal.id, name: principal.name, role: principal.role };
     } else {
       payload = { sub: openid, role: 'none', scope: 'mini' };
     }

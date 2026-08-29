@@ -1,7 +1,7 @@
 .tip {
   margin: 20rpx 28rpx 0;
   font-size: 24rpx;
-  color: #948b7d;
+  color: #8494ab;
 }
 
 .course-card {
@@ -33,15 +33,15 @@
 
 .slot-chip {
   font-size: 22rpx;
-  color: #d95f38;
-  background: #fbf0e8;
+  color: #2563eb;
+  background: #e8f0fd;
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
 }
 
 .slot-chip.none {
-  color: #b6ac9d;
-  background: #f1ede6;
+  color: #9dacc2;
+  background: #eaeff7;
 }
 
 .row3 {
@@ -52,7 +52,7 @@
 
 .go {
   font-size: 26rpx;
-  color: #e8542c;
+  color: #2563eb;
   font-weight: 600;
 }
 
